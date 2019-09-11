@@ -44,70 +44,131 @@ public class Scanner {
 		this.r = r;
 	}
 
+	/**
+	 * @param c - maybe next char
+	 * @return true if next char is 'c'
+	 * @throws IOException
+	 */
+	private boolean isNext(char c) throws IOException {
+		if (lastChar.isPresent()) {
+			if (lastChar.get() == c) {
+				pos++;
+				lastChar = Optional.empty();
+				return true;	
+			}
+			else return false;
+		}
+		
+		int current;
+		if ((current = r.read()) != -1) {
+			char currentChar = (char) current;
+
+			if ((char) current == c) {
+				pos++;
+				return true;
+			}
+				
+
+			lastChar = Optional.of(new Character(currentChar));
+		}
+		return false;
+	}
+
 	public Token getNext() throws Exception {
-		int current = r.read();
+		Token mayBeNext;
+		int current;
+		char currentChar;
+		int currentPos = pos;
+		pos++;
 
-		if (current == -1)
-			return new Token(EOF, "eof", pos, 0);
+		if (lastChar.isPresent()) {
+			currentChar = lastChar.get();
+			lastChar = Optional.empty();
+		} else {
+			current = r.read();
 
-		char currentChar = (char) current;
+			if (current == -1)
+				return new Token(EOF, "eof", currentPos, 0);
+
+			currentChar = (char) current;
+		}
+		
 		switch (currentChar) {
 		case '+':
-			return new Token(Kind.OP_PLUS, "+", pos++, line);
+			return new Token(Kind.OP_PLUS, "+", currentPos, line);
 		case '-':
-			return new Token(Kind.OP_MINUS, "-", pos++, line);
+			return new Token(Kind.OP_MINUS, "-", currentPos, line);
 		case '*':
-			return new Token(Kind.OP_TIMES, "*", pos++, line);
+			return new Token(Kind.OP_TIMES, "*", currentPos, line);
 		case '/':
-			// TODO : Check for //
-			return new Token(Kind.OP_DIV, "/", pos++, line);
+			mayBeNext = new Token(Kind.OP_DIV, "/", currentPos, line);
+
+			if (isNext('/')) return new Token(Kind.OP_DIVDIV, "//", currentPos, line);
+			
+			return mayBeNext;
 		case '%':
-			return new Token(Kind.OP_MOD, "%", pos++, line);
+			return new Token(Kind.OP_MOD, "%", currentPos, line);
 		case '^':
-			return new Token(Kind.OP_POW, "^", pos++, line);
+			return new Token(Kind.OP_POW, "^", currentPos, line);
 		case '#':
-			return new Token(Kind.OP_HASH, "#", pos++, line);
+			return new Token(Kind.OP_HASH, "#", currentPos, line);
 		case '&':
-			return new Token(Kind.BIT_AMP, "&", pos++, line);
+			return new Token(Kind.BIT_AMP, "&", currentPos, line);
 		case '~':
-			// TODO : Check for ~=
-			return new Token(Kind.BIT_XOR, "~", pos++, line);
+			mayBeNext = new Token(Kind.BIT_XOR, "~", currentPos, line);
+
+			if (isNext('=')) return new Token(Kind.REL_NOTEQ, "~=", currentPos, line);
+			
+			return mayBeNext;
 		case '|':
-			return new Token(Kind.BIT_OR, "|", pos++, line);
+			return new Token(Kind.BIT_OR, "|", currentPos, line);
 		case '<':
-			// TODO : Check for <<
-			// TODO : Check for <=
-			return new Token(Kind.REL_LT, "<", pos++, line);
+			mayBeNext = new Token(Kind.REL_LT, "<", currentPos, line);
+			
+			if (isNext('<')) return new Token(Kind.BIT_SHIFTL, "<<", currentPos, line);
+			if (isNext('=')) return new Token(Kind.REL_LE, "<=", currentPos, line);	
+			return mayBeNext;
 		case '>':
-			// TODO : Check for >>
-			// TODO : Check for >=
-			return new Token(Kind.REL_GT, ">", pos++, line);
+			mayBeNext = new Token(Kind.REL_GT, ">", currentPos, line);
+			
+			if (isNext('>')) return new Token(Kind.BIT_SHIFTR, ">>", currentPos, line);
+			if (isNext('=')) return new Token(Kind.REL_GE, ">=", currentPos, line);
+			return mayBeNext;
 		case '=':
-			// TODO : Check for ==
-			return new Token(Kind.ASSIGN, "(", pos++, line);
+			mayBeNext = new Token(Kind.ASSIGN, "=", currentPos, line);
+			if (isNext('=')) return new Token(Kind.REL_EQEQ, "==", currentPos, line);
+			return mayBeNext;
 		case '(':
-			return new Token(Kind.LPAREN, "(", pos++, line);
+			return new Token(Kind.LPAREN, "(", currentPos, line);
 		case ')':
-			return new Token(Kind.RPAREN, ")", pos++, line);
+			return new Token(Kind.RPAREN, ")", currentPos, line);
 		case '{':
-			return new Token(Kind.LCURLY, "{", pos++, line);
+			return new Token(Kind.LCURLY, "{", currentPos, line);
 		case '}':
-			return new Token(Kind.RCURLY, "}", pos++, line);
+			return new Token(Kind.RCURLY, "}", currentPos, line);
 		case '[':
-			return new Token(Kind.LSQUARE, "[", pos++, line);
+			return new Token(Kind.LSQUARE, "[", currentPos, line);
 		case ']':
-			return new Token(Kind.RSQUARE, "]", pos++, line);
+			return new Token(Kind.RSQUARE, "]", currentPos, line);
 		case ';':
-			return new Token(Kind.SEMI, ";", pos++, line);
+			return new Token(Kind.SEMI, ";", currentPos, line);
 		case ':':
-			// TODO : Check for ::
-			return new Token(Kind.COLON, ":", pos++, line);
+			mayBeNext = new Token(Kind.COLON, ":", currentPos, line);
+			if (isNext(':')) return new Token(Kind.COLONCOLON, "::", currentPos, line);
+			return mayBeNext;
 		case ',':
-			return new Token(Kind.COMMA, ",", pos++, line);
+			return new Token(Kind.COMMA, ",", currentPos, line);
 		case '.':
-			// TODO : Check for ..
-			// TODO : Check for ...
-			return new Token(Kind.DOT, ".", pos++, line);
+			mayBeNext = new Token(Kind.DOT, ".", currentPos, line);
+			
+			if (isNext('.')) {
+				mayBeNext = new Token(Kind.DOTDOT, "..", currentPos, line);
+				
+				if (isNext('.')) {
+					return new Token(Kind.DOTDOTDOT, "...", currentPos, line);
+				}
+			}
+			return mayBeNext;
 		default:
 			throw new LexicalException("Handle all the cases");
 		}
