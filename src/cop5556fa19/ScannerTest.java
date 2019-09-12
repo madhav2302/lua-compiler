@@ -29,13 +29,17 @@ import static cop5556fa19.Token.Kind.*;
 class ScannerTest {
 
 	// I like this to make it easy to print objects and turn this output on and off
-	static boolean doPrint = true;
+	static boolean doPrint = false;
 
 	private void show(Object input) {
 		if (doPrint) {
 			System.out.println(input.toString());
 		}
 	}
+	
+	// ***********************************
+	// Provided examples
+	// ***********************************
 
 	/**
 	 * Example showing how to get input from a Java string literal.
@@ -117,9 +121,67 @@ class ScannerTest {
 		assertEquals(t.kind, REL_EQEQ);
 		assertEquals(t.text, "==");
 	}
+	
+	// ***********************************
+	// Test For Integer Literals
+	// ***********************************
+	@Test
+	void shouldThrowException_NumberOutOfRange() throws Exception {
+		String outOfRangeNumber = String.valueOf(Long.MAX_VALUE);
+		
+		Reader r = new StringReader(outOfRangeNumber);
+		Scanner s = new Scanner(r);
+		
+		String expectedMessage = outOfRangeNumber + " is out of range.";
+		String messageInException = "";
+		try {
+			s.getNext();
+		} catch (LexicalException e) {
+			messageInException = e.getMessage();
+		}
+		
+		assertEquals(messageInException, expectedMessage);
+	}
+	
+	@Test
+	void handleIntegerLiteral() throws Exception {
+		Reader r = new StringReader("012345678");
+		Scanner s = new Scanner(r);
+		
+		int pos = 0;
+		assertToken(s, INTLIT, "0", pos++);
+		assertToken(s, INTLIT, "12345678", pos++);
+	}
+	
+	@Test
+	void handleNonZeroDigitIntegerLiteral() throws Exception {
+		Reader r = new StringReader("12345678");
+		Scanner s = new Scanner(r);
+		
+		int pos = 0;
+		assertToken(s, INTLIT, "12345678", pos++);
+	}
+	
+	@Test
+	void handleZeroDigitIntegerLiteral() throws Exception {
+		Reader r = new StringReader("00000");
+		Scanner s = new Scanner(r);
+		
+		int pos = 0;
+		assertToken(s, INTLIT, "0", pos++);
+		assertToken(s, INTLIT, "0", pos++);
+		assertToken(s, INTLIT, "0", pos++);
+		assertToken(s, INTLIT, "0", pos++);
+		assertToken(s, INTLIT, "0", pos++);
+		
+	}
+	
+	// ***********************************
+	// Test For Other Tokens
+	// ***********************************	
 
 	@Test
-	void testAllOtherTokens() throws Exception {
+	void handleOtherTokens() throws Exception {
 		Reader r = new StringReader("+-*/%^#&~|<<>>//==~=<=>=<>(=){}[]::;:,...,,..,.");
 		Scanner s = new Scanner(r);
 
@@ -183,6 +245,10 @@ class ScannerTest {
 		assertToken(s, DOT, ".", pos++);
 	}
 
+	// ***********************************
+	// Common methods
+	// ***********************************
+	
 	void assertToken(Scanner s, Kind kind, String text, int pos) throws Exception {
 		assertToken(s, new Token(kind, text, pos, 0));
 	}
@@ -195,5 +261,4 @@ class ScannerTest {
 		assertEquals(found.pos, expected.pos);
 		assertEquals(found.line, expected.line);
 	}
-
 }
