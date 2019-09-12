@@ -64,6 +64,15 @@ public class Scanner {
 		}
 
 		switch (currentChar) {
+
+		// TODO : Handle String literal
+		// String Literal
+		case '"':
+			return findStringLit(true, currentChar, currentPos);
+		case '\'':
+			return findStringLit(false, currentChar, currentPos);
+
+		// Integer Literal
 		case '0':
 			return new Token(Kind.INTLIT, "0", currentPos, line);
 		case '1':
@@ -166,6 +175,49 @@ public class Scanner {
 		}
 	}
 
+	/**
+	 * Used to find String Literal
+	 */
+	private Token findStringLit(boolean isDoubleQuote, char currentChar, int currentPos)
+			throws IOException, LexicalException {
+		StringBuilder sb = new StringBuilder();
+		sb.append(currentChar);
+
+		int current;
+		while (true) {
+			current = r.read();
+			pos++;
+
+			if (current == -1)
+				throw new LexicalException("Unexpected EOF");
+			if (current > 127 || current < 0)
+				throw new LexicalException("Character out of range of ASCII chars");
+
+			if (isDoubleQuote && currentChar == '\'') {
+				throw new LexicalException("Illegal character in String Literal : '");
+			}
+
+			if (!isDoubleQuote && currentChar == '"') {
+				throw new LexicalException("Illegal character in String Literal : \"");
+			}
+
+			if (currentChar == '\\') {
+				current = r.read();
+				pos++;
+				
+				currentChar = (char) current;
+			}
+
+			break;
+
+		}
+
+		return null;
+	}
+
+	/**
+	 * Used to find Integer Literal starting with NonZero digits
+	 */
 	private Token findIntegerLit(char currentChar, int currentPos) throws IOException, LexicalException {
 		StringBuilder sb = new StringBuilder();
 		sb.append(currentChar);
@@ -188,7 +240,6 @@ public class Scanner {
 			return new Token(Kind.INTLIT, result, currentPos, line);
 		else
 			throw new LexicalException(result + " is out of range.");
-
 	}
 
 	private boolean isInteger(String input) {
@@ -201,7 +252,7 @@ public class Scanner {
 	}
 
 	/**
-	 * It is only use for checking while other tokens
+	 * It is only used for checking other tokens
 	 * 
 	 * @param c - maybe next char
 	 * @return true if next char is 'c'
