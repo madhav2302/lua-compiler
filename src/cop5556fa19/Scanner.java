@@ -44,36 +44,6 @@ public class Scanner {
 		this.r = r;
 	}
 
-	/**
-	 * @param c - maybe next char
-	 * @return true if next char is 'c'
-	 * @throws IOException
-	 */
-	private boolean isNext(char c) throws IOException {
-		if (lastChar.isPresent()) {
-			if (lastChar.get() == c) {
-				pos++;
-				lastChar = Optional.empty();
-				return true;	
-			}
-			else return false;
-		}
-		
-		int current;
-		if ((current = r.read()) != -1) {
-			char currentChar = (char) current;
-
-			if ((char) current == c) {
-				pos++;
-				return true;
-			}
-				
-
-			lastChar = Optional.of(new Character(currentChar));
-		}
-		return false;
-	}
-
 	public Token getNext() throws Exception {
 		Token mayBeNext;
 		int current;
@@ -92,8 +62,22 @@ public class Scanner {
 
 			currentChar = (char) current;
 		}
-		
+
 		switch (currentChar) {
+		case '0':
+			return new Token(Kind.INTLIT, "0", currentPos, line);
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			return findIntegerLit(currentChar, currentPos);
+
+		// Other Tokens
 		case '+':
 			return new Token(Kind.OP_PLUS, "+", currentPos, line);
 		case '-':
@@ -103,8 +87,9 @@ public class Scanner {
 		case '/':
 			mayBeNext = new Token(Kind.OP_DIV, "/", currentPos, line);
 
-			if (isNext('/')) return new Token(Kind.OP_DIVDIV, "//", currentPos, line);
-			
+			if (isNextOtherToken('/'))
+				return new Token(Kind.OP_DIVDIV, "//", currentPos, line);
+
 			return mayBeNext;
 		case '%':
 			return new Token(Kind.OP_MOD, "%", currentPos, line);
@@ -117,26 +102,32 @@ public class Scanner {
 		case '~':
 			mayBeNext = new Token(Kind.BIT_XOR, "~", currentPos, line);
 
-			if (isNext('=')) return new Token(Kind.REL_NOTEQ, "~=", currentPos, line);
-			
+			if (isNextOtherToken('='))
+				return new Token(Kind.REL_NOTEQ, "~=", currentPos, line);
+
 			return mayBeNext;
 		case '|':
 			return new Token(Kind.BIT_OR, "|", currentPos, line);
 		case '<':
 			mayBeNext = new Token(Kind.REL_LT, "<", currentPos, line);
-			
-			if (isNext('<')) return new Token(Kind.BIT_SHIFTL, "<<", currentPos, line);
-			if (isNext('=')) return new Token(Kind.REL_LE, "<=", currentPos, line);	
+
+			if (isNextOtherToken('<'))
+				return new Token(Kind.BIT_SHIFTL, "<<", currentPos, line);
+			if (isNextOtherToken('='))
+				return new Token(Kind.REL_LE, "<=", currentPos, line);
 			return mayBeNext;
 		case '>':
 			mayBeNext = new Token(Kind.REL_GT, ">", currentPos, line);
-			
-			if (isNext('>')) return new Token(Kind.BIT_SHIFTR, ">>", currentPos, line);
-			if (isNext('=')) return new Token(Kind.REL_GE, ">=", currentPos, line);
+
+			if (isNextOtherToken('>'))
+				return new Token(Kind.BIT_SHIFTR, ">>", currentPos, line);
+			if (isNextOtherToken('='))
+				return new Token(Kind.REL_GE, ">=", currentPos, line);
 			return mayBeNext;
 		case '=':
 			mayBeNext = new Token(Kind.ASSIGN, "=", currentPos, line);
-			if (isNext('=')) return new Token(Kind.REL_EQEQ, "==", currentPos, line);
+			if (isNextOtherToken('='))
+				return new Token(Kind.REL_EQEQ, "==", currentPos, line);
 			return mayBeNext;
 		case '(':
 			return new Token(Kind.LPAREN, "(", currentPos, line);
@@ -154,17 +145,18 @@ public class Scanner {
 			return new Token(Kind.SEMI, ";", currentPos, line);
 		case ':':
 			mayBeNext = new Token(Kind.COLON, ":", currentPos, line);
-			if (isNext(':')) return new Token(Kind.COLONCOLON, "::", currentPos, line);
+			if (isNextOtherToken(':'))
+				return new Token(Kind.COLONCOLON, "::", currentPos, line);
 			return mayBeNext;
 		case ',':
 			return new Token(Kind.COMMA, ",", currentPos, line);
 		case '.':
 			mayBeNext = new Token(Kind.DOT, ".", currentPos, line);
-			
-			if (isNext('.')) {
+
+			if (isNextOtherToken('.')) {
 				mayBeNext = new Token(Kind.DOTDOT, "..", currentPos, line);
-				
-				if (isNext('.')) {
+
+				if (isNextOtherToken('.')) {
 					return new Token(Kind.DOTDOTDOT, "...", currentPos, line);
 				}
 			}
@@ -174,4 +166,68 @@ public class Scanner {
 		}
 	}
 
+	private Token findIntegerLit(char currentChar, int currentPos) throws IOException, LexicalException {
+		StringBuilder sb = new StringBuilder();
+		sb.append(currentChar);
+
+		int current;
+		while ((current = r.read()) != -1) {
+			currentChar = (char) current;
+
+			if (isInteger(String.valueOf(currentChar))) {
+				pos++;
+				sb.append(currentChar);
+			} else {
+				lastChar = Optional.of(currentChar);
+				break;
+			}
+		}
+
+		String result = sb.toString();
+		if (isInteger(result))
+			return new Token(Kind.INTLIT, result, currentPos, line);
+		else
+			throw new LexicalException(result + " is out of range.");
+
+	}
+
+	private boolean isInteger(String input) {
+		try {
+			Integer.parseInt(String.valueOf(input));
+			return true;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * It is only use for checking while other tokens
+	 * 
+	 * @param c - maybe next char
+	 * @return true if next char is 'c'
+	 * @throws IOException
+	 */
+	private boolean isNextOtherToken(char c) throws IOException {
+		if (lastChar.isPresent()) {
+			if (lastChar.get() == c) {
+				pos++;
+				lastChar = Optional.empty();
+				return true;
+			} else
+				return false;
+		}
+
+		int current;
+		if ((current = r.read()) != -1) {
+			char currentChar = (char) current;
+
+			if ((char) current == c) {
+				pos++;
+				return true;
+			}
+
+			lastChar = Optional.of(new Character(currentChar));
+		}
+		return false;
+	}
 }
