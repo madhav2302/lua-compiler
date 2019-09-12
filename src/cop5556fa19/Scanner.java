@@ -90,6 +90,7 @@ public class Scanner {
 		case '+':
 			return new Token(Kind.OP_PLUS, "+", currentPos, line);
 		case '-':
+			// TODO : Handle Comments
 			return new Token(Kind.OP_MINUS, "-", currentPos, line);
 		case '*':
 			return new Token(Kind.OP_TIMES, "*", currentPos, line);
