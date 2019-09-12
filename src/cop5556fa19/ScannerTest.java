@@ -122,6 +122,90 @@ class ScannerTest {
 		assertEquals(t.text, "==");
 	}
 	
+	@Test
+	void testWithEverything() throws Exception {
+		Reader r = new StringReader("+-*/%^#&~|<<>>//==00~=<=>1234567890=<>(22=){}[]::;:,.120.012.,,..,.");
+		Scanner s = new Scanner(r);
+		
+		int pos = 0;
+		assertToken(s, OP_PLUS, "+", pos++);
+		assertToken(s, OP_MINUS, "-", pos++);
+		assertToken(s, OP_TIMES, "*", pos++);
+		assertToken(s, OP_DIV, "/", pos++);
+		assertToken(s, OP_MOD, "%", pos++);
+		assertToken(s, OP_POW, "^", pos++);
+		assertToken(s, OP_HASH, "#", pos++);
+		assertToken(s, BIT_AMP, "&", pos++);
+		assertToken(s, BIT_XOR, "~", pos++);
+		assertToken(s, BIT_OR, "|", pos++);
+		assertToken(s, BIT_SHIFTL, "<<", pos++);
+		pos++;
+
+		assertToken(s, BIT_SHIFTR, ">>", pos++);
+		pos++;
+
+		assertToken(s, OP_DIVDIV, "//", pos++);
+		pos++;
+
+		assertToken(s, REL_EQEQ, "==", pos++);
+		pos++;
+		
+		assertToken(s, INTLIT, "0", pos++);
+		assertToken(s, INTLIT, "0", pos++);
+
+		assertToken(s, REL_NOTEQ, "~=", pos++);
+		pos++;
+
+		assertToken(s, REL_LE, "<=", pos++);
+		pos++;
+
+		assertToken(s, REL_GT, ">", pos++);
+		
+		assertToken(s, INTLIT, "1234567890", pos);
+		pos = pos + 10;
+
+		
+		assertToken(s, ASSIGN, "=", pos++);
+		assertToken(s, REL_LT, "<", pos++);
+		assertToken(s, REL_GT, ">", pos++);
+		assertToken(s, LPAREN, "(", pos++);
+		
+		assertToken(s, INTLIT, "22", pos++);
+		pos++;
+		
+		assertToken(s, ASSIGN, "=", pos++);
+		assertToken(s, RPAREN, ")", pos++);
+		assertToken(s, LCURLY, "{", pos++);
+		assertToken(s, RCURLY, "}", pos++);
+		assertToken(s, LSQUARE, "[", pos++);
+		assertToken(s, RSQUARE, "]", pos++);
+		assertToken(s, COLONCOLON, "::", pos++);
+		pos++;
+
+		assertToken(s, SEMI, ";", pos++);
+		assertToken(s, COLON, ":", pos++);
+		assertToken(s, COMMA, ",", pos++);
+		assertToken(s, DOT, ".", pos++);
+		
+		assertToken(s, INTLIT, "120", pos++);
+		pos++;
+		pos++;
+		
+		assertToken(s, DOT, ".", pos++);
+		assertToken(s, INTLIT, "0", pos++);
+		assertToken(s, INTLIT, "12", pos++);
+		pos++;
+		assertToken(s, DOT, ".", pos++);
+
+		assertToken(s, COMMA, ",", pos++);
+		assertToken(s, COMMA, ",", pos++);
+		assertToken(s, DOTDOT, "..", pos++);
+		pos++;
+
+		assertToken(s, COMMA, ",", pos++);
+		assertToken(s, DOT, ".", pos++);
+	}
+	
 	// ***********************************
 	// Test For Integer Literals
 	// ***********************************
