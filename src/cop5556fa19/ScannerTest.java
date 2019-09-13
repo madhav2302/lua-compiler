@@ -216,7 +216,7 @@ class ScannerTest {
 		Reader r = new StringReader(outOfRangeNumber);
 		Scanner s = new Scanner(r);
 		
-		String expectedMessage = outOfRangeNumber + " is out of range.";
+		String expectedMessage = "Number out of range: " + outOfRangeNumber;
 		String messageInException = "";
 		try {
 			s.getNext();

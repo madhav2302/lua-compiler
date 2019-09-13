@@ -20,7 +20,7 @@ import cop5556fa19.Token.Kind;
 public class Scanner {
 
 	private enum State {
-		START, AFTER_DIV, AFTER_XOR, AFTER_LT, AFTER_GT, AFTER_EQ, AFTER_COLON, AFTER_DOT, AFTER_DOTDOT
+		START, AFTER_DIV, AFTER_XOR, AFTER_LT, AFTER_GT, AFTER_EQ, AFTER_COLON, AFTER_DOT, AFTER_DOTDOT, IN_DIGIT
 	}
 
 	Reader r;
@@ -50,6 +50,8 @@ public class Scanner {
 
 		Token t = null;
 		State state = State.START;
+
+		StringBuilder sb = new StringBuilder();
 
 		int pos = -1;
 		int line = -1;
@@ -154,8 +156,21 @@ public class Scanner {
 					state = State.AFTER_DOT;
 					getChar();
 					break;
+				case '0':
+					t = new Token(Kind.INTLIT, "0", pos, line);
+					getChar();
+					break;
+				case -1:
+					t = new Token(Kind.EOF, "EOF", pos, line);
+					break;
+
 				default:
-					// TODO: Implement things
+					if (Character.isDigit((char) ch)) {
+						state = State.IN_DIGIT;
+						sb.append((char) ch);
+						getChar();
+						break;
+					}
 
 				}
 				break;
@@ -227,6 +242,20 @@ public class Scanner {
 					getChar();
 				} else {
 					t = new Token(Kind.DOTDOT, "..", pos, line);
+				}
+				break;
+			case IN_DIGIT:
+				if (Character.isDigit((char) ch)) {
+					sb.append(Character.getNumericValue(ch));
+					getChar();
+				} else {
+					String result = sb.toString();
+					try {
+						Integer.parseInt(result);
+					} catch (NumberFormatException e) {
+						throw new LexicalException("Number out of range: " + result);
+					}
+					t = new Token(Kind.INTLIT, result, pos, line);
 				}
 				break;
 			default:
