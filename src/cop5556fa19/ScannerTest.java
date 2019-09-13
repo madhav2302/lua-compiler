@@ -334,15 +334,19 @@ class ScannerTest {
 	// ***********************************
 	
 	void assertToken(Scanner s, Kind kind, String text, int pos) throws Exception {
-		assertToken(s, new Token(kind, text, pos, 0));
+		assertToken(s, kind, text, pos, 0);
+	}
+	
+	void assertToken(Scanner s, Kind kind, String text, int pos, int line) throws Exception {
+		assertToken(s, new Token(kind, text, pos, line));
 	}
 
 	void assertToken(Scanner s, Token expected) throws Exception {
 		Token found;
 		show(found = s.getNext());
-		assertEquals(found.kind, expected.kind);
-		assertEquals(found.text, expected.text);
-		assertEquals(found.pos, expected.pos);
-		assertEquals(found.line, expected.line);
+		assertEquals(expected.kind, found.kind);
+		assertEquals(expected.text, found.text);
+		assertEquals(expected.pos, found.pos);
+		assertEquals(expected.line, found.line);
 	}
 }

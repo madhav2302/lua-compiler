@@ -13,25 +13,21 @@
  */
 package cop5556fa19;
 
-import static cop5556fa19.Token.Kind.*;
-
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Optional;
-
 import cop5556fa19.Token.Kind;
 
 public class Scanner {
-	Reader r;
-	private int pos = 0;
-	private int line = 0;
 
-	/**
-	 * When checking the next value, if it doesn't have any sequence then we need to
-	 * save the value of char here because we won't be able to fetch it again using
-	 * r.read()
-	 */
-	private Optional<Character> lastChar = Optional.empty();
+	private enum State {
+		START, AFTER_DIV, AFTER_XOR, AFTER_LT, AFTER_GT, AFTER_EQ, AFTER_COLON, AFTER_DOT, AFTER_DOTDOT
+	}
+
+	Reader r;
+	private int currentPos = -1;
+	private int currentLine = -1;
+
+	int ch;
 
 	@SuppressWarnings("serial")
 	public static class LexicalException extends Exception {
@@ -45,241 +41,205 @@ public class Scanner {
 	}
 
 	public Token getNext() throws Exception {
-		Token mayBeNext;
-		int current;
-		char currentChar;
-		int currentPos = pos;
-		pos++;
-
-		if (lastChar.isPresent()) {
-			currentChar = lastChar.get();
-			lastChar = Optional.empty();
-		} else {
-			current = r.read();
-
-			if (current == -1)
-				return new Token(EOF, "eof", currentPos, 0);
-
-			currentChar = (char) current;
+		// Read value for the first time
+		if (currentPos == -1 && currentLine == -1) {
+			getChar();
+			currentPos = 0;
+			currentLine = 0;
 		}
 
-		switch (currentChar) {
+		Token t = null;
+		State state = State.START;
 
-		// TODO : Handle String literal
-		// String Literal
-		case '"':
-			return findStringLit(true, currentChar, currentPos);
-		case '\'':
-			return findStringLit(false, currentChar, currentPos);
+		int pos = -1;
+		int line = -1;
 
-		// Integer Literal
-		case '0':
-			return new Token(Kind.INTLIT, "0", currentPos, line);
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			return findIntegerLit(currentChar, currentPos);
+		while (t == null) {
+			switch (state) {
+			case START:
+				pos = currentPos;
+				line = currentLine;
 
-		// Other Tokens
-		case '+':
-			return new Token(Kind.OP_PLUS, "+", currentPos, line);
-		case '-':
-			// TODO : Handle Comments
-			return new Token(Kind.OP_MINUS, "-", currentPos, line);
-		case '*':
-			return new Token(Kind.OP_TIMES, "*", currentPos, line);
-		case '/':
-			mayBeNext = new Token(Kind.OP_DIV, "/", currentPos, line);
+				switch (ch) {
+				case '+':
+					t = new Token(Kind.OP_PLUS, "+", pos, line);
+					getChar();
+					break;
+				case '-':
+					// TODO : Handle Comments
+					t = new Token(Kind.OP_MINUS, "-", pos, line);
+					getChar();
+					break;
+				case '*':
+					t = new Token(Kind.OP_TIMES, "*", pos, line);
+					getChar();
+					break;
+				case '/':
+					state = State.AFTER_DIV;
+					getChar();
+					break;
+				case '%':
+					t = new Token(Kind.OP_MOD, "%", pos, line);
+					getChar();
+					break;
+				case '^':
+					t = new Token(Kind.OP_POW, "^", pos, line);
+					getChar();
+					break;
+				case '#':
+					t = new Token(Kind.OP_HASH, "#", pos, line);
+					getChar();
+					break;
+				case '&':
+					t = new Token(Kind.BIT_AMP, "&", pos, line);
+					getChar();
+					break;
+				case '~':
+					state = State.AFTER_XOR;
+					getChar();
+					break;
+				case '|':
+					t = new Token(Kind.BIT_OR, "|", pos, line);
+					getChar();
+					break;
+				case '<':
+					state = State.AFTER_LT;
+					getChar();
+					break;
+				case '>':
+					state = State.AFTER_GT;
+					getChar();
+					break;
+				case '=':
+					state = State.AFTER_EQ;
+					getChar();
+					break;
+				case '(':
+					t = new Token(Kind.LPAREN, "(", pos, line);
+					getChar();
+					break;
+				case ')':
+					t = new Token(Kind.RPAREN, ")", pos, line);
+					getChar();
+					break;
+				case '{':
+					t = new Token(Kind.LCURLY, "{", pos, line);
+					getChar();
+					break;
+				case '}':
+					t = new Token(Kind.RCURLY, "}", pos, line);
+					getChar();
+					break;
+				case '[':
+					t = new Token(Kind.LSQUARE, "[", pos, line);
+					getChar();
+					break;
+				case ']':
+					t = new Token(Kind.RSQUARE, "]", pos, line);
+					getChar();
+					break;
+				case ';':
+					t = new Token(Kind.SEMI, ";", pos, line);
+					getChar();
+					break;
+				case ':':
+					state = State.AFTER_COLON;
+					getChar();
+					break;
+				case ',':
+					t = new Token(Kind.COMMA, ",", pos, line);
+					getChar();
+					break;
+				case '.':
+					state = State.AFTER_DOT;
+					getChar();
+					break;
+				default:
+					// TODO: Implement things
 
-			if (isNextOtherToken('/'))
-				return new Token(Kind.OP_DIVDIV, "//", currentPos, line);
-
-			return mayBeNext;
-		case '%':
-			return new Token(Kind.OP_MOD, "%", currentPos, line);
-		case '^':
-			return new Token(Kind.OP_POW, "^", currentPos, line);
-		case '#':
-			return new Token(Kind.OP_HASH, "#", currentPos, line);
-		case '&':
-			return new Token(Kind.BIT_AMP, "&", currentPos, line);
-		case '~':
-			mayBeNext = new Token(Kind.BIT_XOR, "~", currentPos, line);
-
-			if (isNextOtherToken('='))
-				return new Token(Kind.REL_NOTEQ, "~=", currentPos, line);
-
-			return mayBeNext;
-		case '|':
-			return new Token(Kind.BIT_OR, "|", currentPos, line);
-		case '<':
-			mayBeNext = new Token(Kind.REL_LT, "<", currentPos, line);
-
-			if (isNextOtherToken('<'))
-				return new Token(Kind.BIT_SHIFTL, "<<", currentPos, line);
-			if (isNextOtherToken('='))
-				return new Token(Kind.REL_LE, "<=", currentPos, line);
-			return mayBeNext;
-		case '>':
-			mayBeNext = new Token(Kind.REL_GT, ">", currentPos, line);
-
-			if (isNextOtherToken('>'))
-				return new Token(Kind.BIT_SHIFTR, ">>", currentPos, line);
-			if (isNextOtherToken('='))
-				return new Token(Kind.REL_GE, ">=", currentPos, line);
-			return mayBeNext;
-		case '=':
-			mayBeNext = new Token(Kind.ASSIGN, "=", currentPos, line);
-			if (isNextOtherToken('='))
-				return new Token(Kind.REL_EQEQ, "==", currentPos, line);
-			return mayBeNext;
-		case '(':
-			return new Token(Kind.LPAREN, "(", currentPos, line);
-		case ')':
-			return new Token(Kind.RPAREN, ")", currentPos, line);
-		case '{':
-			return new Token(Kind.LCURLY, "{", currentPos, line);
-		case '}':
-			return new Token(Kind.RCURLY, "}", currentPos, line);
-		case '[':
-			return new Token(Kind.LSQUARE, "[", currentPos, line);
-		case ']':
-			return new Token(Kind.RSQUARE, "]", currentPos, line);
-		case ';':
-			return new Token(Kind.SEMI, ";", currentPos, line);
-		case ':':
-			mayBeNext = new Token(Kind.COLON, ":", currentPos, line);
-			if (isNextOtherToken(':'))
-				return new Token(Kind.COLONCOLON, "::", currentPos, line);
-			return mayBeNext;
-		case ',':
-			return new Token(Kind.COMMA, ",", currentPos, line);
-		case '.':
-			mayBeNext = new Token(Kind.DOT, ".", currentPos, line);
-
-			if (isNextOtherToken('.')) {
-				mayBeNext = new Token(Kind.DOTDOT, "..", currentPos, line);
-
-				if (isNextOtherToken('.')) {
-					return new Token(Kind.DOTDOTDOT, "...", currentPos, line);
 				}
-			}
-			return mayBeNext;
-		default:
-			throw new LexicalException("Handle all the cases");
-		}
-	}
-
-	/**
-	 * Used to find String Literal
-	 */
-	private Token findStringLit(boolean isDoubleQuote, char currentChar, int currentPos)
-			throws IOException, LexicalException {
-		StringBuilder sb = new StringBuilder();
-		sb.append(currentChar);
-
-		int current;
-		while (true) {
-			current = r.read();
-			pos++;
-
-			if (current == -1)
-				throw new LexicalException("Unexpected EOF");
-			if (current > 127 || current < 0)
-				throw new LexicalException("Character out of range of ASCII chars");
-
-			if (isDoubleQuote && currentChar == '\'') {
-				throw new LexicalException("Illegal character in String Literal : '");
-			}
-
-			if (!isDoubleQuote && currentChar == '"') {
-				throw new LexicalException("Illegal character in String Literal : \"");
-			}
-
-			if (currentChar == '\\') {
-				current = r.read();
-				pos++;
-				
-				currentChar = (char) current;
-			}
-
-			break;
-
-		}
-
-		return null;
-	}
-
-	/**
-	 * Used to find Integer Literal starting with NonZero digits
-	 */
-	private Token findIntegerLit(char currentChar, int currentPos) throws IOException, LexicalException {
-		StringBuilder sb = new StringBuilder();
-		sb.append(currentChar);
-
-		int current;
-		while ((current = r.read()) != -1) {
-			currentChar = (char) current;
-
-			if (isInteger(String.valueOf(currentChar))) {
-				pos++;
-				sb.append(currentChar);
-			} else {
-				lastChar = Optional.of(currentChar);
+				break;
+			case AFTER_DIV:
+				if (ch == '/') {
+					t = new Token(Kind.OP_DIVDIV, "//", pos, line);
+					getChar();
+				} else {
+					t = new Token(Kind.OP_DIV, "/", pos, line);
+				}
+				break;
+			case AFTER_XOR:
+				if (ch == '=') {
+					t = new Token(Kind.REL_NOTEQ, "~=", pos, line);
+					getChar();
+				} else {
+					t = new Token(Kind.BIT_XOR, "~", pos, line);
+				}
+				break;
+			case AFTER_LT:
+				if (ch == '<') {
+					t = new Token(Kind.BIT_SHIFTL, "<<", pos, line);
+					getChar();
+				} else if (ch == '=') {
+					t = new Token(Kind.REL_LE, "<=", pos, line);
+					getChar();
+				} else {
+					t = new Token(Kind.REL_LT, "<", pos, line);
+				}
+				break;
+			case AFTER_GT:
+				if (ch == '>') {
+					t = new Token(Kind.BIT_SHIFTR, ">>", pos, line);
+					getChar();
+				} else if (ch == '=') {
+					t = new Token(Kind.REL_GE, ">=", pos, line);
+					getChar();
+				} else {
+					t = new Token(Kind.REL_GT, ">", pos, line);
+				}
+				break;
+			case AFTER_EQ:
+				if (ch == ('=')) {
+					t = new Token(Kind.REL_EQEQ, "==", pos, line);
+					getChar();
+				} else {
+					t = new Token(Kind.ASSIGN, "=", pos, line);
+				}
+				break;
+			case AFTER_COLON:
+				if (ch == ':') {
+					t = new Token(Kind.COLONCOLON, "::", pos, line);
+					getChar();
+				} else {
+					t = new Token(Kind.COLON, ":", pos, line);
+				}
+				break;
+			case AFTER_DOT:
+				if (ch == '.') {
+					state = State.AFTER_DOTDOT;
+					getChar();
+				} else {
+					t = new Token(Kind.DOT, ".", pos, line);
+				}
+				break;
+			case AFTER_DOTDOT:
+				if (ch == '.') {
+					t = new Token(Kind.DOTDOTDOT, "...", pos, line);
+					getChar();
+				} else {
+					t = new Token(Kind.DOTDOT, "..", pos, line);
+				}
+				break;
+			default:
+				// TODO
 				break;
 			}
 		}
 
-		String result = sb.toString();
-		if (isInteger(result))
-			return new Token(Kind.INTLIT, result, currentPos, line);
-		else
-			throw new LexicalException(result + " is out of range.");
+		return t;
 	}
 
-	private boolean isInteger(String input) {
-		try {
-			Integer.parseInt(String.valueOf(input));
-			return true;
-		} catch (NumberFormatException e) {
-			return false;
-		}
-	}
-
-	/**
-	 * It is only used for checking other tokens
-	 * 
-	 * @param c - maybe next char
-	 * @return true if next char is 'c'
-	 * @throws IOException
-	 */
-	private boolean isNextOtherToken(char c) throws IOException {
-		if (lastChar.isPresent()) {
-			if (lastChar.get() == c) {
-				pos++;
-				lastChar = Optional.empty();
-				return true;
-			} else
-				return false;
-		}
-
-		int current;
-		if ((current = r.read()) != -1) {
-			char currentChar = (char) current;
-
-			if ((char) current == c) {
-				pos++;
-				return true;
-			}
-
-			lastChar = Optional.of(new Character(currentChar));
-		}
-		return false;
+	void getChar() throws IOException {
+		ch = r.read();
+		currentPos++;
 	}
 }
