@@ -79,7 +79,7 @@ public class ExpressionParser {
     }
 
     /**
-     * @param kind
+     * @param kinds
      * @return
      * @throws Exception
      */
