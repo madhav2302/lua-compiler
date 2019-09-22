@@ -1,25 +1,25 @@
 
 /* *
- * Developed  for the class project in COP5556 Programming Language Principles 
+ * Developed  for the class project in COP5556 Programming Language Principles
  * at the University of Florida, Fall 2019.
- * 
- * This software is solely for the educational benefit of students 
- * enrolled in the course during the Fall 2019 semester.  
- * 
+ *
+ * This software is solely for the educational benefit of students
+ * enrolled in the course during the Fall 2019 semester.
+ *
  * This software, and any software derived from it,  may not be shared with others or posted to public web sites or repositories,
  * either during the course or afterwards.
- * 
+ *
  *  @Beverly A. Sanders, 2019
  */
 package cop5556fa19;
+
+import cop5556fa19.Token.Kind;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import cop5556fa19.Token.Kind;
 
 public class Scanner {
 
@@ -58,11 +58,11 @@ public class Scanner {
 		IN_IDEN, IN_STRING, AFTER_CR, AFTER_HYPHEN;
 	}
 
-	Reader r;
+	private Reader r;
 	private int currentPos = -1;
 	private int currentLine = -1;
 
-	int ch;
+	private int ch;
 
 	@SuppressWarnings("serial")
 	public static class LexicalException extends Exception {
@@ -231,7 +231,7 @@ public class Scanner {
 						break;
 					}
 					// NAME and KEYWORD
-					if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122)) {
+					if (Character.isJavaIdentifierStart(ch)) {
 						state = State.IN_IDEN;
 						sb.append((char) ch);
 						getChar();
@@ -256,8 +256,52 @@ public class Scanner {
 				break;
 			case AFTER_HYPHEN:
 				if (ch == '-') {
-					while (!isLineTerminator()) {
-						
+					getChar();
+					while (true) {
+						if (ch == -1) break;
+
+						if (ch == '\\') {
+							getChar();
+							if (ch == 'n') {
+								currentLine++;
+								currentPos = -1;
+								getChar();
+								break;
+							}
+
+							if (ch == 'r') {
+								getChar();
+
+								if (ch == '\\') {
+									getChar();
+
+									if (ch == 'n') {
+										currentPos = -1;
+										currentLine++;
+										getChar();
+									}
+								} else {
+									currentPos = 0;
+									currentLine++;
+								}
+								break;
+							}
+						} else if (ch == '\n') {
+							currentLine++;
+							currentPos = 0;
+							getChar();
+							break;
+						} else if (ch == '\r') {
+							getChar();
+							if (ch == '\n') {
+								getChar();
+							}
+							currentLine++;
+							currentPos = 0;
+							break;
+						} else {
+							getChar();
+						}
 					}
 					state = State.START;
 				} else {
@@ -349,8 +393,7 @@ public class Scanner {
 				}
 				break;
 			case IN_IDEN:
-				if ((ch >= 65 && ch <= 90) || (ch >= 97 && ch <= 122) || (ch >= 48 && ch <= 57) || ch == 95
-						|| ch == 36) {
+				if (Character.isJavaIdentifierPart(ch)) {
 					sb.append((char) ch);
 					getChar();
 				} else {
@@ -384,28 +427,43 @@ public class Scanner {
 								"Unexpected EOF for string literal at line: " + line + ",pos: " + pos);
 					}
 					switch (ch) {
-					case 'a':
-					case 'b':
-					case 'f':
-					case 'n':
-					case 'r':
-					case 't':
-					case 'v':
-					case '\\':
-					case '"':
-					case '\'':
-						sb.append('\\'); // Append the escape character we skipped
-						sb.append((char) ch);
-						getChar();
+					case 'b': // backspace
+						sb.append((char) 10);
+						break;
+					case 'a': // bell
+						sb.append((char) 7);
+						break;
+					case 'v': // vertical tab
+						sb.append((char) 13);
+						break;
+					case 'f': // form feed
+						sb.append((char) 14);
+						break;
+					case 'n': // new line
+						sb.append((char) 12);
+						break;
+					case 'r': // carriage return
+						sb.append((char) 15);
+						break;
+					case 't': // horizontal tab
+						sb.append((char) 11);
+						break;
+					case '\\': // backslash
+						sb.append((char) 92);
+						break;
+					case '"': // quotation
+						sb.append((char) 34);
+						break;
+					case '\'': // apostrophe
+						sb.append((char) 32);
 						break;
 					default:
 						throw new LexicalException("Illegal Character Found in string literal \\");
-
 					}
+					getChar();
 				} else {
 					sb.append((char) ch);
 					getChar();
-
 				}
 				break;
 			default:
@@ -416,33 +474,7 @@ public class Scanner {
 		return t;
 	}
 
-	private boolean isLineTerminator() throws IOException {
-		if (ch == '\n') {
-			currentLine++;
-			currentPos = -1;
-			getChar();
-			return true;
-		}
-
-		if (ch == '\r') {
-			currentLine++;
-
-			getChar();
-
-			if (ch == '\n') {
-				currentPos = -1;
-				currentLine++;
-				getChar();
-			} else {
-				currentPos = 0;
-				currentLine++;
-			}
-		}
-		
-		return false;
-	}
-
-	void getChar() throws IOException {
+	private void getChar() throws IOException {
 		ch = r.read();
 		currentPos++;
 	}

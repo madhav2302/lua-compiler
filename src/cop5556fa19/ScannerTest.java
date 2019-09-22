@@ -13,23 +13,19 @@
 
 package cop5556fa19;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.Reader;
-import java.io.StringReader;
-
-import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Test;
-
 import cop5556fa19.Scanner.LexicalException;
 import cop5556fa19.Token.Kind;
+import org.junit.jupiter.api.Test;
+
+import java.io.*;
 
 import static cop5556fa19.Token.Kind.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ScannerTest {
 
 	// I like this to make it easy to print objects and turn this output on and off
-	static boolean doPrint = false;
+	static boolean doPrint = true;
 
 	private void show(Object input) {
 		if (doPrint) {
@@ -127,7 +123,7 @@ class ScannerTest {
 		Reader r = new StringReader("--cc");
 		Scanner s = new Scanner(r);
 		
-		s.getNext();
+		assertToken(s, EOF, "EOF", 4);
 	}
 
 	@Test
@@ -240,7 +236,7 @@ class ScannerTest {
 	
 	@Test
 	void shouldThrowException_StartsWithUnknown() throws Exception {
-		Reader r = new StringReader("__");
+		Reader r = new StringReader("@@");
 		Scanner s = new Scanner(r);
 		String errorMessage = "";
 		
