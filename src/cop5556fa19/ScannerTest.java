@@ -121,6 +121,14 @@ class ScannerTest {
 		assertEquals(t.kind, REL_EQEQ);
 		assertEquals(t.text, "==");
 	}
+	
+	@Test
+	void testComment() throws Exception {
+		Reader r = new StringReader("--cc");
+		Scanner s = new Scanner(r);
+		
+		s.getNext();
+	}
 
 	@Test
 	void testWithEverything() throws Exception {

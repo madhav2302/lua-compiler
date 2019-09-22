@@ -55,7 +55,7 @@ public class Scanner {
 
 	private enum State {
 		START, AFTER_DIV, AFTER_XOR, AFTER_LT, AFTER_GT, AFTER_EQ, AFTER_COLON, AFTER_DOT, AFTER_DOTDOT, IN_DIGIT,
-		IN_IDEN, IN_STRING, AFTER_CR,;
+		IN_IDEN, IN_STRING, AFTER_CR, AFTER_HYPHEN;
 	}
 
 	Reader r;
@@ -120,8 +120,7 @@ public class Scanner {
 					getChar();
 					break;
 				case '-':
-					// TODO : Handle Comments
-					t = new Token(Kind.OP_MINUS, "-", pos, line);
+					state = State.AFTER_HYPHEN;
 					getChar();
 					break;
 				case '*':
@@ -254,6 +253,16 @@ public class Scanner {
 				}
 
 				state = State.START;
+				break;
+			case AFTER_HYPHEN:
+				if (ch == '-') {
+					while (!isLineTerminator()) {
+						
+					}
+					state = State.START;
+				} else {
+					t = new Token(Kind.OP_MINUS, "-", pos, line);
+				}
 				break;
 			case AFTER_DIV:
 				if (ch == '/') {
@@ -405,6 +414,32 @@ public class Scanner {
 		}
 
 		return t;
+	}
+
+	private boolean isLineTerminator() throws IOException {
+		if (ch == '\n') {
+			currentLine++;
+			currentPos = -1;
+			getChar();
+			return true;
+		}
+
+		if (ch == '\r') {
+			currentLine++;
+
+			getChar();
+
+			if (ch == '\n') {
+				currentPos = -1;
+				currentLine++;
+				getChar();
+			} else {
+				currentPos = 0;
+				currentLine++;
+			}
+		}
+		
+		return false;
 	}
 
 	void getChar() throws IOException {
