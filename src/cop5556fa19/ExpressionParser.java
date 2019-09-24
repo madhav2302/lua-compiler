@@ -13,14 +13,13 @@
 
 package cop5556fa19;
 
-import cop5556fa19.AST.Block;
-import cop5556fa19.AST.Exp;
-import cop5556fa19.AST.ExpBinary;
+import cop5556fa19.AST.*;
 import cop5556fa19.Token.Kind;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
-import static cop5556fa19.Token.Kind.KW_or;
+import static cop5556fa19.Token.Kind.*;
 
 public class ExpressionParser {
 
@@ -31,6 +30,7 @@ public class ExpressionParser {
         t = scanner.getNext(); //establish invariant
     }
 
+    // exp ::= andExp {or andExp}
     Exp exp() throws Exception {
         Token first = t;
         Exp e0 = andExp();
@@ -42,10 +42,155 @@ public class ExpressionParser {
         return e0;
     }
 
+    // andExp ::= condExp {and condExp}
     private Exp andExp() throws Exception {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("andExp");  //I find this is a more useful placeholder than returning null.
+        Token first = t;
+        Exp e0 = condExp();
+
+        while (isKind(KW_and)) {
+            Token op = consume();
+            Exp e1 = condExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
     }
+
+    // condExp ::= bitOrExp {(<|>|<=|>=|~=|==) bitOrExp}
+    private Exp condExp() throws Exception {
+        Token first = t;
+        Exp e0 = bitOrExp();
+
+        while (isKind(REL_LT, REL_GT, REL_LE, REL_GE, REL_NOTEQ, REL_EQEQ)) {
+            Token op = consume();
+            Exp e1 = bitOrExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    // bitOrExp ::= xOrExp {| xOrExp}
+    private Exp bitOrExp() throws Exception {
+        Token first = t;
+        Exp e0 = xOrExp();
+
+        while (isKind(BIT_OR)) {
+            Token op = consume();
+            Exp e1 = xOrExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    // xOrExp ::= bitAmpExp {~ bitAmpExp}
+    private Exp xOrExp() throws Exception {
+        Token first = t;
+        Exp e0 = bitAmpExp();
+
+        while (isKind(BIT_XOR)) {
+            Token op = consume();
+            Exp e1 = bitAmpExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    // bitAmpExp ::= shiftExp {& shiftExp}
+    private Exp bitAmpExp() throws Exception {
+        Token first = t;
+        Exp e0 = shiftExp();
+
+        while (isKind(BIT_AMP)) {
+            Token op = consume();
+            Exp e1 = shiftExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    // shiftExp ::= concatExp {(<<|>>) concatExp}
+    private Exp shiftExp() throws Exception {
+        Token first = t;
+        Exp e0 = concatExp();
+
+        while (isKind(BIT_SHIFTL, BIT_SHIFTR)) {
+            Token op = consume();
+            Exp e1 = concatExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    // concatExp ::= weakCalcExp {.. weakCalcExp} // Right Associativity
+    private Exp concatExp() throws Exception {
+        Token first = t;
+        Exp e0 = weakCalcExp();
+
+        while (isKind(DOTDOT)) {
+            Token op = consume();
+            Exp e1 = weakCalcExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    // weakCalcExp ::= otherCalcExp {(+|-) otherCalcExp}
+    private Exp weakCalcExp() throws Exception {
+        Token first = t;
+        Exp e0 = otherCalcExp();
+
+        while (isKind(OP_PLUS, OP_MINUS)) {
+            Token op = consume();
+            Exp e1 = otherCalcExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    // otherCalcExp ::= otherExp {(/|*|//|%) otherExp}
+    private Exp otherCalcExp() throws Exception {
+        Token first = t;
+        Exp e0 = otherExp();
+
+        while (isKind(OP_DIV, OP_DIVDIV, OP_TIMES, OP_MOD)) {
+            Token op = consume();
+            Exp e1 = otherExp();
+            e0 = new ExpBinary(first, e0, op, e1);
+        }
+
+        return e0;
+    }
+
+    private Exp makeExp(Function<Token, Exp> aClass) throws Exception {
+        Token temp = consume();
+        return aClass.apply(temp);
+    }
+
+    private Exp otherExp() throws Exception {
+        if (isKind(INTLIT)) return makeExp(ExpInt::new);
+        if (isKind(STRINGLIT)) return makeExp(ExpString::new);
+        if (isKind(KW_nil)) return makeExp(ExpNil::new);
+        if (isKind(KW_false)) return makeExp(ExpFalse::new);
+        if (isKind(KW_true)) return makeExp(ExpTrue::new);
+        if (isKind(DOTDOTDOT)) return makeExp(ExpVarArgs::new);
+
+        if (isKind(LPAREN)) {
+            consume();
+            Exp result = exp();
+            match(RPAREN);
+            return result;
+        }
+
+        throw new UnsupportedOperationException();
+    }
+
 
     private Block block() {
         return new Block(null);  //this is OK for Assignment 2
