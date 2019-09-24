@@ -180,6 +180,7 @@ public class ExpressionParser {
         if (isKind(KW_false)) return makeExp(ExpFalse::new);
         if (isKind(KW_true)) return makeExp(ExpTrue::new);
         if (isKind(DOTDOTDOT)) return makeExp(ExpVarArgs::new);
+        if (isKind(NAME)) return makeExp(ExpName::new);
 
         if (isKind(LPAREN)) {
             consume();
