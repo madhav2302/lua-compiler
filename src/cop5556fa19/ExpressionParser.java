@@ -17,7 +17,6 @@ import cop5556fa19.AST.*;
 import cop5556fa19.Token.Kind;
 
 import java.util.Arrays;
-import java.util.function.Function;
 
 import static cop5556fa19.Token.Kind.*;
 
@@ -25,6 +24,7 @@ public class ExpressionParser {
 
     final Scanner scanner;
     Token t;  //invariant:  this is the next token
+
     ExpressionParser(Scanner s) throws Exception {
         this.scanner = s;
         t = scanner.getNext(); //establish invariant
@@ -168,19 +168,14 @@ public class ExpressionParser {
         return e0;
     }
 
-    private Exp makeExp(Function<Token, Exp> aClass) throws Exception {
-        Token temp = consume();
-        return aClass.apply(temp);
-    }
-
     private Exp otherExp() throws Exception {
-        if (isKind(INTLIT)) return makeExp(ExpInt::new);
-        if (isKind(STRINGLIT)) return makeExp(ExpString::new);
-        if (isKind(KW_nil)) return makeExp(ExpNil::new);
-        if (isKind(KW_false)) return makeExp(ExpFalse::new);
-        if (isKind(KW_true)) return makeExp(ExpTrue::new);
-        if (isKind(DOTDOTDOT)) return makeExp(ExpVarArgs::new);
-        if (isKind(NAME)) return makeExp(ExpName::new);
+        if (isKind(INTLIT)) return new ExpInt(consume());
+        if (isKind(STRINGLIT)) return new ExpString(consume());
+        if (isKind(KW_nil)) return new ExpNil(consume());
+        if (isKind(KW_false)) return new ExpFalse(consume());
+        if (isKind(KW_true)) return new ExpTrue(consume());
+        if (isKind(DOTDOTDOT)) return new ExpVarArgs(consume());
+        if (isKind(NAME)) return new ExpName(consume());
 
         if (isKind(LPAREN)) {
             consume();
