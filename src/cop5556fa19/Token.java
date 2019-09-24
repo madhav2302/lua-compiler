@@ -19,51 +19,51 @@ package cop5556fa19;
 public class Token {
 	public enum Kind {
 		NAME,
-		INTLIT,
-		KW_and,
-		KW_break,
+		INTLIT, //
+		KW_and, //
+		KW_break, //
 		KW_do,
 		KW_else,
 		KW_elseif,
 		KW_end,
-		KW_false,
+		KW_false, //
 		KW_for,
 		KW_function,
 		KW_goto,
 		KW_if,
 		KW_in,
 		KW_local,
-		KW_nil,
+		KW_nil, //
 		KW_not,
-		KW_or,
+		KW_or, //
 		KW_repeat,
 		KW_return,
 		KW_then,
-		KW_true,
+		KW_true, //
 		KW_until,
 		KW_while,
-		OP_PLUS,
-		OP_MINUS,
-		OP_TIMES,
-		OP_DIV,
-		OP_MOD,
+		OP_PLUS, //
+		OP_MINUS, //
+		OP_TIMES, //
+		OP_DIV, //
+		OP_MOD, //
 		OP_POW,
 		OP_HASH,
-		BIT_AMP,
-		BIT_XOR,
-		BIT_OR,
-		BIT_SHIFTL,
-		BIT_SHIFTR,
-		OP_DIVDIV,
-		REL_EQEQ,
-		REL_NOTEQ,
-		REL_LE,
-		REL_GE,
-		REL_LT,
-		REL_GT,
+		BIT_AMP, //
+		BIT_XOR, //
+		BIT_OR, //
+		BIT_SHIFTL, //
+		BIT_SHIFTR, //
+		OP_DIVDIV, //
+		REL_EQEQ, //
+		REL_NOTEQ, //
+		REL_LE, //
+		REL_GE, //
+		REL_LT, //
+		REL_GT, //
 		ASSIGN,
-		LPAREN,
-		RPAREN,
+		LPAREN, //
+		RPAREN, //
 		LCURLY,
 		RCURLY,
 		LSQUARE,
@@ -73,9 +73,9 @@ public class Token {
 		COLON,
 		COMMA,
 		DOT,
-		DOTDOT,
-		DOTDOTDOT,
-		STRINGLIT,
+		DOTDOT, //
+		DOTDOTDOT, //
+		STRINGLIT, //
 		EOF
 	}
 
