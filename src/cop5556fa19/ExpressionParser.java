@@ -16,7 +16,10 @@ package cop5556fa19;
 import cop5556fa19.AST.*;
 import cop5556fa19.Token.Kind;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static cop5556fa19.Token.Kind.*;
 
@@ -176,6 +179,7 @@ public class ExpressionParser {
         if (isKind(KW_true)) return new ExpTrue(consume());
         if (isKind(DOTDOTDOT)) return new ExpVarArgs(consume());
         if (isKind(NAME)) return new ExpName(consume());
+        if (isKind(KW_function)) return functionExp();
 
         if (isKind(LPAREN)) {
             consume();
@@ -185,6 +189,42 @@ public class ExpressionParser {
         }
 
         throw new UnsupportedOperationException();
+    }
+
+    private Exp functionExp() throws Exception {
+        Token firstToken = consume();
+        return new ExpFunction(firstToken, functionBody());
+    }
+
+    private FuncBody functionBody() throws Exception {
+        Token firstToken = match(LPAREN);
+        FuncBody funcBody = new FuncBody(firstToken, parList(), block());
+        match(RPAREN);
+        match(KW_end);
+        return funcBody;
+    }
+
+    private ParList parList() throws Exception {
+        if (isKind(DOTDOTDOT)) return new ParList(consume(), Collections.emptyList(), true);
+
+        boolean hasVarArgs = false;
+        Token firstToken = match(NAME);
+
+        List<Name> nameList = new ArrayList<>();
+        nameList.add(new Name(firstToken, firstToken.getName()));
+
+        while (isKind(COMMA)) {
+            consume();
+            if (isKind(NAME)) {
+                Token nameToken = consume();
+                nameList.add(new Name(nameToken, nameToken.getName()));
+            } else {
+                match(DOTDOTDOT);
+                hasVarArgs = true;
+                break;
+            }
+        }
+        return new ParList(firstToken, nameList, hasVarArgs);
     }
 
 
