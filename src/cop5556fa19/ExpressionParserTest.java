@@ -118,9 +118,9 @@ class ExpressionParserTest {
         String input = "\"concat\" .. \"is\"..\"right associative\"";
         Exp e = parseAndShow(input);
         Exp expected = Expressions.makeBinary(
-                Expressions.makeExpString("\"concat\"")
+                Expressions.makeExpString("concat")
                 , DOTDOT
-                , Expressions.makeBinary("\"is\"", DOTDOT, "\"right associative\""));
+                , Expressions.makeBinary("is", DOTDOT, "right associative"));
         show("expected=" + expected);
         assertEquals(expected, e);
     }
@@ -131,10 +131,10 @@ class ExpressionParserTest {
         Exp e = parseAndShow(input);
         Exp expected = Expressions.makeBinary(
                 Expressions.makeBinary(
-                        Expressions.makeExpString("\"minus\"")
+                        Expressions.makeExpString("minus")
                         , OP_MINUS
-                        , Expressions.makeExpString("\"is\"")), OP_MINUS,
-                Expressions.makeExpString("\"left associative\""));
+                        , Expressions.makeExpString("is")), OP_MINUS,
+                Expressions.makeExpString("left associative"));
         show("expected=" + expected);
         assertEquals(expected, e);
 
