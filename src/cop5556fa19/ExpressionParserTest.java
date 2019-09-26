@@ -51,10 +51,8 @@ class ExpressionParserTest {
 
     @Test
     void testIdent0() throws Exception {
-        String input = "x";
+        String input = "function () end";
         Exp e = parseAndShow(input);
-        assertEquals(ExpName.class, e.getClass());
-        assertEquals("x", ((ExpName) e).name);
     }
 
     @Test

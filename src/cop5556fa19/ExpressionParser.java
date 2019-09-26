@@ -172,14 +172,27 @@ public class ExpressionParser {
     }
 
     private Exp otherExp() throws Exception {
-        if (isKind(INTLIT)) return new ExpInt(consume());
-        if (isKind(STRINGLIT)) return new ExpString(consume());
+        // Unary Operations
+        if (isKind(KW_not, OP_HASH, OP_MINUS, BIT_XOR)) {
+            Token firstToken = consume();
+            return new ExpUnary(firstToken, firstToken.kind, exp());
+        }
+
         if (isKind(KW_nil)) return new ExpNil(consume());
         if (isKind(KW_false)) return new ExpFalse(consume());
         if (isKind(KW_true)) return new ExpTrue(consume());
+        if (isKind(INTLIT)) return new ExpInt(consume());
+        if (isKind(STRINGLIT)) return new ExpString(consume());
         if (isKind(DOTDOTDOT)) return new ExpVarArgs(consume());
+
+        // Function Def
+        if (isKind(KW_function)) {
+            Token firstToken = consume(); // consume `function`
+            return new ExpFunction(firstToken, functionBody());
+        }
+
+        // Prefix Exp
         if (isKind(NAME)) return new ExpName(consume());
-        if (isKind(KW_function)) return functionExp();
 
         if (isKind(LPAREN)) {
             consume();
@@ -188,20 +201,30 @@ public class ExpressionParser {
             return result;
         }
 
-        throw new UnsupportedOperationException();
-    }
+        // Table Constructor
+        if (isKind(LCURLY)) {
+            Token firstToken = consume(); // consume LCURLY
+            if (isKind(RCURLY)) {
+                consume();
+                return new ExpTable(firstToken, Collections.emptyList());
+            }
 
-    private Exp functionExp() throws Exception {
-        Token firstToken = consume();
-        return new ExpFunction(firstToken, functionBody());
+            List<Field> fieldList = fieldList();
+            match(RCURLY);
+            return new ExpTable(firstToken, fieldList);
+        }
+
+        throw new SyntaxException(t, "Illegal token found");
     }
 
     private FuncBody functionBody() throws Exception {
         Token firstToken = match(LPAREN);
-        FuncBody funcBody = new FuncBody(firstToken, parList(), block());
+        ParList parList = isKind(RPAREN) ? new ParList(t, Collections.emptyList(), false) : parList();
         match(RPAREN);
+        Block block = block();
         match(KW_end);
-        return funcBody;
+
+        return new FuncBody(firstToken, parList, block);
     }
 
     private ParList parList() throws Exception {
@@ -227,9 +250,55 @@ public class ExpressionParser {
         return new ParList(firstToken, nameList, hasVarArgs);
     }
 
-
     private Block block() {
         return new Block(null);  //this is OK for Assignment 2
+    }
+
+    // TODO : How can we determine end of the field list???
+    private List<Field> fieldList() throws Exception {
+        List<Field> fieldList = new ArrayList<>();
+        fieldList.add(field());
+
+        while (isKind(COMMA, SEMI)) {
+            consume();
+
+            if (isKind(LSQUARE, NAME, KW_nil, KW_false, KW_true, INTLIT, STRINGLIT, DOTDOTDOT, KW_function, LPAREN, LCURLY)) {
+                fieldList.add(field());
+            } else break;
+        }
+
+        match(COMMA, SEMI);
+        return fieldList;
+    }
+
+    // TODO :
+    private boolean isFirstOfOtherExp() {
+        return false;
+    }
+
+    private Field field() throws Exception {
+        if (isKind(LSQUARE)) {
+            Token firstToken = consume();
+            Exp key = exp();
+            match(RSQUARE);
+            match(ASSIGN);
+            Exp value = exp();
+            return new FieldExpKey(firstToken, key, value);
+        }
+
+        if (isKind(NAME)) {
+            Token nameToken = consume();
+
+            if (isKind(ASSIGN)) {
+                match(ASSIGN);
+                Exp exp = exp();
+                return new FieldNameKey(nameToken, new Name(nameToken, nameToken.getName()), exp);
+            } else {
+                return new FieldImplicitKey(nameToken, new ExpName(nameToken));
+            }
+        }
+
+        return new FieldImplicitKey(null, exp());
     }
 
     protected boolean isKind(Kind kind) {
