@@ -131,16 +131,26 @@ public class ExpressionParser {
 
     // concatExp ::= weakCalcExp {.. weakCalcExp} // Right Associativity
     private Exp concatExp() throws Exception {
+        List<Exp> concatExps = new ArrayList<>();
+
         Token first = t;
         Exp e0 = weakCalcExp();
 
+        concatExps.add(e0);
+
         while (isKind(DOTDOT)) {
-            Token op = consume();
+            consume();
             Exp e1 = weakCalcExp();
-            e0 = new ExpBinary(first, e0, op, e1);
+            concatExps.add(e1);
         }
 
-        return e0;
+        Exp eLast = concatExps.get(concatExps.size() - 1);
+        for (int i = concatExps.size() - 2; i >=0; i--) {
+            Exp eSecondLast = concatExps.get(i);
+            eLast = new ExpBinary(first, eSecondLast, DOTDOT, eLast);
+        }
+
+        return eLast;
     }
 
     // weakCalcExp ::= otherCalcExp {(+|-) otherCalcExp}
