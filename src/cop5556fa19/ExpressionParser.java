@@ -167,27 +167,55 @@ public class ExpressionParser {
         return e0;
     }
 
-    // otherCalcExp ::= otherExp {(/|*|//|%) otherExp}
+    // otherCalcExp ::= unaryExp {(/|*|//|%) unaryExp}
     private Exp otherCalcExp() throws Exception {
         Token first = t;
-        Exp e0 = otherExp();
+        Exp e0 = unaryExp();
 
         while (isKind(OP_DIV, OP_DIVDIV, OP_TIMES, OP_MOD)) {
             Token op = consume();
-            Exp e1 = otherExp();
+            Exp e1 = unaryExp();
             e0 = new ExpBinary(first, e0, op, e1);
         }
 
         return e0;
     }
 
-    private Exp otherExp() throws Exception {
-        // Unary Operations
-        if (isKind(KW_not, OP_HASH, OP_MINUS, BIT_XOR)) {
-            Token firstToken = consume();
-            return new ExpUnary(firstToken, firstToken.kind, exp());
+    // unaryExp ::= (not|-|~|#) exp | powerExp
+    private Exp unaryExp() throws Exception {
+        if (isKind(KW_not, OP_MINUS, OP_HASH, BIT_XOR)) {
+            Token first = consume();
+            return new ExpUnary(first, first.kind, exp());
+        } else {
+            return powerExp();
+        }
+    }
+
+    // powerExp ::= otherExp {^ otherExp}
+    private Exp powerExp() throws Exception {
+        List<Exp> powerExps = new ArrayList<>();
+
+        Token first = t;
+        Exp e0 = otherExp();
+
+        powerExps.add(e0);
+
+        while (isKind(OP_POW)) {
+            consume();
+            Exp e1 = otherExp();
+            powerExps.add(e1);
         }
 
+        Exp eLast = powerExps.get(powerExps.size() - 1);
+        for (int i = powerExps.size() - 2; i >=0; i--) {
+            Exp eSecondLast = powerExps.get(i);
+            eLast = new ExpBinary(first, eSecondLast, OP_POW, eLast);
+        }
+
+        return eLast;
+    }
+
+    private Exp otherExp() throws Exception {
         if (isKind(KW_nil)) return new ExpNil(consume());
         if (isKind(KW_false)) return new ExpFalse(consume());
         if (isKind(KW_true)) return new ExpTrue(consume());
@@ -264,7 +292,6 @@ public class ExpressionParser {
         return new Block(null);  //this is OK for Assignment 2
     }
 
-    // TODO : How can we determine end of the field list???
     private List<Field> fieldList() throws Exception {
         List<Field> fieldList = new ArrayList<>();
         fieldList.add(field());
@@ -277,13 +304,7 @@ public class ExpressionParser {
             } else break;
         }
 
-        match(COMMA, SEMI);
         return fieldList;
-    }
-
-    // TODO :
-    private boolean isFirstOfOtherExp() {
-        return false;
     }
 
     private Field field() throws Exception {
