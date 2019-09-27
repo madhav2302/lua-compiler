@@ -144,13 +144,7 @@ public class ExpressionParser {
             concatExps.add(e1);
         }
 
-        Exp eLast = concatExps.get(concatExps.size() - 1);
-        for (int i = concatExps.size() - 2; i >=0; i--) {
-            Exp eSecondLast = concatExps.get(i);
-            eLast = new ExpBinary(first, eSecondLast, DOTDOT, eLast);
-        }
-
-        return eLast;
+        return constructRightAssociativityExp(concatExps, first, DOTDOT);
     }
 
     // weakCalcExp ::= otherCalcExp {(+|-) otherCalcExp}
@@ -181,7 +175,7 @@ public class ExpressionParser {
         return e0;
     }
 
-    // unaryExp ::= (not|-|~|#) exp | powerExp
+    // unaryExp ::= (not|-|~|#) powerExp | powerExp
     private Exp unaryExp() throws Exception {
         if (isKind(KW_not, OP_MINUS, OP_HASH, BIT_XOR)) {
             Token first = consume();
@@ -206,13 +200,7 @@ public class ExpressionParser {
             powerExps.add(e1);
         }
 
-        Exp eLast = powerExps.get(powerExps.size() - 1);
-        for (int i = powerExps.size() - 2; i >=0; i--) {
-            Exp eSecondLast = powerExps.get(i);
-            eLast = new ExpBinary(first, eSecondLast, OP_POW, eLast);
-        }
-
-        return eLast;
+        return constructRightAssociativityExp(powerExps, first, OP_POW);
     }
 
     private Exp otherExp() throws Exception {
@@ -382,6 +370,16 @@ public class ExpressionParser {
         Token tmp = t;
         t = scanner.getNext();
         return tmp;
+    }
+
+    private static Exp constructRightAssociativityExp(List<Exp> powerExps, Token first, Kind opPow) {
+        Exp eLast = powerExps.get(powerExps.size() - 1);
+        for (int i = powerExps.size() - 2; i >=0; i--) {
+            Exp eSecondLast = powerExps.get(i);
+            eLast = new ExpBinary(first, eSecondLast, opPow, eLast);
+        }
+
+        return eLast;
     }
 
     void error(Kind... expectedKinds) throws SyntaxException {
