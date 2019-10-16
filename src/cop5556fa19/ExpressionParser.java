@@ -179,7 +179,8 @@ public class ExpressionParser {
     private Exp unaryExp() throws Exception {
         if (isKind(KW_not, OP_MINUS, OP_HASH, BIT_XOR)) {
             Token first = consume();
-            return new ExpUnary(first, first.kind, powerExp());
+            // Multi Unary like (- -2) or (not #~1) - Failed in assignment 2
+            return new ExpUnary(first, first.kind, unaryExp());
         } else {
             return powerExp();
         }

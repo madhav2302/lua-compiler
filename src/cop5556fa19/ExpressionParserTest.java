@@ -140,4 +140,10 @@ class ExpressionParserTest {
 
     }
 
+    @Test
+    void testMultiUnaryOperator() throws Exception {
+        String input = "not #~1";
+        Exp e = parseAndShow(input);
+    }
+
 }
