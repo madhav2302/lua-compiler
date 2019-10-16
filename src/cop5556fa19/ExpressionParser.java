@@ -33,6 +33,16 @@ public class ExpressionParser {
         t = scanner.getNext(); //establish invariant
     }
 
+    private static Exp constructRightAssociativityExp(List<Exp> powerExps, Token first, Kind opPow) {
+        Exp eLast = powerExps.get(powerExps.size() - 1);
+        for (int i = powerExps.size() - 2; i >= 0; i--) {
+            Exp eSecondLast = powerExps.get(i);
+            eLast = new ExpBinary(first, eSecondLast, opPow, eLast);
+        }
+
+        return eLast;
+    }
+
     // exp ::= andExp {or andExp}
     Exp exp() throws Exception {
         Token first = t;
@@ -213,32 +223,41 @@ public class ExpressionParser {
         if (isKind(DOTDOTDOT)) return new ExpVarArgs(consume());
 
         // Function Def
-        if (isKind(KW_function)) {
-            Token firstToken = consume(); // consume `function`
-            return new ExpFunction(firstToken, functionBody());
+        {
+            if (isKind(KW_function)) {
+                Token firstToken = consume(); // consume `function`
+                return new ExpFunction(firstToken, functionBody());
+            }
         }
 
-        // Prefix Exp
-        if (isKind(NAME)) return new ExpName(consume());
 
-        if (isKind(LPAREN)) {
-            consume();
-            Exp result = exp();
-            match(RPAREN);
-            return result;
+        // TODO : Now it can be name and more for first condition
+        // prefixexp ::= var | functioncall | ‘(’ exp ‘)’
+        // var ::= Name | prefixexp ‘[’ exp ‘]’ | prefixexp ‘.’ Name
+        {
+            if (isKind(NAME)) return new ExpName(consume());
+
+            if (isKind(LPAREN)) {
+                consume();
+                Exp result = exp();
+                match(RPAREN);
+                return result;
+            }
         }
 
         // Table Constructor
-        if (isKind(LCURLY)) {
-            Token firstToken = consume(); // consume LCURLY
-            if (isKind(RCURLY)) {
-                consume();
-                return new ExpTable(firstToken, Collections.emptyList());
-            }
+        {
+            if (isKind(LCURLY)) {
+                Token firstToken = consume(); // consume LCURLY
+                if (isKind(RCURLY)) {
+                    consume();
+                    return new ExpTable(firstToken, Collections.emptyList());
+                }
 
-            List<Field> fieldList = fieldList();
-            match(RCURLY);
-            return new ExpTable(firstToken, fieldList);
+                List<Field> fieldList = fieldList();
+                match(RCURLY);
+                return new ExpTable(firstToken, fieldList);
+            }
         }
 
         throw new SyntaxException(t, "Illegal token found");
@@ -371,16 +390,6 @@ public class ExpressionParser {
         Token tmp = t;
         t = scanner.getNext();
         return tmp;
-    }
-
-    private static Exp constructRightAssociativityExp(List<Exp> powerExps, Token first, Kind opPow) {
-        Exp eLast = powerExps.get(powerExps.size() - 1);
-        for (int i = powerExps.size() - 2; i >=0; i--) {
-            Exp eSecondLast = powerExps.get(i);
-            eLast = new ExpBinary(first, eSecondLast, opPow, eLast);
-        }
-
-        return eLast;
     }
 
     void error(Kind... expectedKinds) throws SyntaxException {
