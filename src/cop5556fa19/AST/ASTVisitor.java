@@ -1,16 +1,3 @@
-/**
- * Developed  for the class project in COP5556 Programming Language Principles 
- * at the University of Florida, Fall 2019.
- * 
- * This software is solely for the educational benefit of students 
- * enrolled in the course during the Fall 2019 semester.  
- * 
- * This software, and any software derived from it,  may not be shared with others or posted to public web sites,
- * either during the course or afterwards.
- * 
- *  @Beverly A. Sanders, 2019
- */
-
 package cop5556fa19.AST;
 
 public interface ASTVisitor {
@@ -41,7 +28,37 @@ public interface ASTVisitor {
 
 	Object visitName(Name name, Object arg);
 
+    Object visitBlock(Block block, Object arg) throws Exception;
+
+    Object visitStatBreak(StatBreak statBreak, Object arg, Object arg2);
+
+    Object visitStatBreak(StatBreak statBreak, Object arg);
+
+    Object visitStatGoto(StatGoto statGoto, Object arg);
+
+    Object visitStatDo(StatDo statDo, Object arg);
+
+    Object visitStatWhile(StatWhile statWhile, Object arg);
+
+    Object visitStatRepeat(StatRepeat statRepeat, Object arg);
+
+    Object visitStatIf(StatIf statIf, Object arg);
+
+    Object visitStatFor1(StatFor statFor1, Object arg);
+
+    Object visitStatForEach(StatForEach statForEach, Object arg);
+
 	Object visitFuncName(FuncName funcName, Object arg);
+
+    Object visitStatFunction(StatFunction statFunction, Object arg);
+
+    Object visitStatLocalFunc(StatLocalFunc statLocalFunc, Object arg);
+
+    Object visitStatLocalAssign(StatLocalAssign statLocalAssign, Object arg);
+
+    Object visitRetStat(RetStat retStat, Object arg);
+
+    Object visitChunk(Chunk chunk, Object arg) throws Exception;
 
 	Object visitFieldExpKey(FieldExpKey fieldExpKey, Object object);
 
@@ -57,6 +74,12 @@ public interface ASTVisitor {
 
 	Object visitExpVarArgs(ExpVarArgs expVarArgs, Object arg);
 
-	Object visitBlock(Block block, Object arg);
+    Object visitStatAssign(StatAssign statAssign, Object arg);
+
+    Object visitExpTableLookup(ExpTableLookup expTableLookup, Object arg);
+
+    Object visitExpFunctionCall(ExpFunctionCall expFunctionCall, Object arg);
+
+    Object visitLabel(StatLabel statLabel, Object ar);
 
 }
