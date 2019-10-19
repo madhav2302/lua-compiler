@@ -321,6 +321,10 @@ public class ExpressionParser {
         return new FieldImplicitKey(null, exp());
     }
 
+    public Chunk parse() {
+        return new Chunk(t, block());
+    }
+
     protected boolean isKind(Kind kind) {
         return t.kind == kind;
     }
