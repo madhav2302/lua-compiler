@@ -23,12 +23,12 @@ import java.util.List;
 
 import static cop5556fa19.Token.Kind.*;
 
-public class ExpressionParser {
+public class Parser {
 
     final Scanner scanner;
     Token t;  //invariant:  this is the next token
 
-    ExpressionParser(Scanner s) throws Exception {
+    Parser(Scanner s) throws Exception {
         this.scanner = s;
         t = scanner.getNext(); //establish invariant
     }
