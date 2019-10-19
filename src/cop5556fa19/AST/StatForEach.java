@@ -2,37 +2,32 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class FuncName extends ASTNode {
+public class StatForEach extends Stat {
 
 	public final List<ExpName> names;
-	public final ExpName afterColon;
+	public final List<Exp> exps;
+	public final Block b;
 
-	public FuncName(Token firstToken, List<ExpName> names, ExpName nameAfterColon) {
+	public StatForEach(Token firstToken, List<ExpName> names, List<Exp> exps, Block b) {
 		super(firstToken);
 		this.names = names;
-		this.afterColon = nameAfterColon;
-	}
-
-	public FuncName(Token firstToken, ExpName n) {
-		super(firstToken);
-		names = new ArrayList<>();
-		names.add(n);
-		afterColon = null;
+		this.exps = exps;
+		this.b = b;
 	}
 
 	@Override
 	public String toString() {
-		return "FuncName [names=" + names + ", afterColon=" + afterColon + ", firstToken=" + firstToken + "]";
+		return "StatForEach [names=" + names + ", exps=" + exps + ", b=" + b + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((afterColon == null) ? 0 : afterColon.hashCode());
+		result = prime * result + ((b == null) ? 0 : b.hashCode());
+		result = prime * result + ((exps == null) ? 0 : exps.hashCode());
 		result = prime * result + ((names == null) ? 0 : names.hashCode());
 		return result;
 	}
@@ -45,11 +40,16 @@ public class FuncName extends ASTNode {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FuncName other = (FuncName) obj;
-		if (afterColon == null) {
-			if (other.afterColon != null)
+		StatForEach other = (StatForEach) obj;
+		if (b == null) {
+			if (other.b != null)
 				return false;
-		} else if (!afterColon.equals(other.afterColon))
+		} else if (!b.equals(other.b))
+			return false;
+		if (exps == null) {
+			if (other.exps != null)
+				return false;
+		} else if (!exps.equals(other.exps))
 			return false;
 		if (names == null) {
 			if (other.names != null)
@@ -61,7 +61,7 @@ public class FuncName extends ASTNode {
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitFuncName(this, arg);
+		return v.visitStatForEach(this, arg);
 	}
 
 }

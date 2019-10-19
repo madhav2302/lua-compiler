@@ -2,27 +2,25 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-import java.util.List;
-
-public class ExpTable extends Exp {
-
-	public final List<Field> fields;
-
-	public ExpTable(Token firstToken, List<Field> fields) {
+public class StatLabel extends Stat {
+	
+	Name label;
+	
+	public StatLabel(Token firstToken, Name label) {
 		super(firstToken);
-		this.fields = fields;
+		this.label = label;
 	}
 
 	@Override
 	public String toString() {
-		return "ExpTable [fields=" + fields + ", firstToken=" + firstToken + "]";
+		return "StatLabel [label=" + label + "]";
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((fields == null) ? 0 : fields.hashCode());
+		result = prime * result + ((label == null) ? 0 : label.hashCode());
 		return result;
 	}
 
@@ -34,18 +32,18 @@ public class ExpTable extends Exp {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ExpTable other = (ExpTable) obj;
-		if (fields == null) {
-			if (other.fields != null)
+		StatLabel other = (StatLabel) obj;
+		if (label == null) {
+			if (other.label != null)
 				return false;
-		} else if (!fields.equals(other.fields))
+		} else if (!label.equals(other.label))
 			return false;
 		return true;
 	}
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitExpTableConstr(this, arg);
+		return v.visitLabel(this,arg);
 	}
 
 }

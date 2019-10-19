@@ -2,29 +2,31 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-import java.util.List;
+public class Chunk extends ASTNode {
+	
+	public final Block block;
 
-public class ExpTable extends Exp {
-
-	public final List<Field> fields;
-
-	public ExpTable(Token firstToken, List<Field> fields) {
+	public Chunk(Token firstToken, Block b) {
 		super(firstToken);
-		this.fields = fields;
+		this.block = b;
 	}
 
+	
 	@Override
 	public String toString() {
-		return "ExpTable [fields=" + fields + ", firstToken=" + firstToken + "]";
+		return "Chunk [block=" + block + ", firstToken=" + firstToken + "]";
 	}
+
+	
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((fields == null) ? 0 : fields.hashCode());
+		result = prime * result + ((block == null) ? 0 : block.hashCode());
 		return result;
 	}
+
 
 	@Override
 	public boolean equals(Object obj) {
@@ -34,18 +36,19 @@ public class ExpTable extends Exp {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ExpTable other = (ExpTable) obj;
-		if (fields == null) {
-			if (other.fields != null)
+		Chunk other = (Chunk) obj;
+		if (block == null) {
+			if (other.block != null)
 				return false;
-		} else if (!fields.equals(other.fields))
+		} else if (!block.equals(other.block))
 			return false;
 		return true;
 	}
 
+
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitExpTableConstr(this, arg);
+		return v.visitChunk(this,arg);
 	}
 
 }

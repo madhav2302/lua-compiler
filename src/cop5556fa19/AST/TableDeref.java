@@ -2,28 +2,29 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-public class FieldExpKey extends Field {
+public class TableDeref extends Var {
 
+	public final Exp table;
 	public final Exp key;
-	public final Exp value;
 
-	public FieldExpKey(Token firstToken, Exp key, Exp value) {
+	public TableDeref(Token firstToken, Exp table, Exp key) {
 		super(firstToken);
+		this.table = table;
 		this.key = key;
-		this.value = value;
 	}
 
 	@Override
 	public String toString() {
-		return "FieldExpKey [key=" + key + ", value=" + value + ", firstToken=" + firstToken + "]";
+		return "TableDeref [table=" + table + ", key=" + key + ", firstToken=" + firstToken + "]";
 	}
 
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((key == null) ? 0 : key.hashCode());
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		result = prime * result + ((table == null) ? 0 : table.hashCode());
 		return result;
 	}
 
@@ -35,23 +36,23 @@ public class FieldExpKey extends Field {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FieldExpKey other = (FieldExpKey) obj;
+		TableDeref other = (TableDeref) obj;
 		if (key == null) {
 			if (other.key != null)
 				return false;
 		} else if (!key.equals(other.key))
 			return false;
-		if (value == null) {
-			if (other.value != null)
+		if (table == null) {
+			if (other.table != null)
 				return false;
-		} else if (!value.equals(other.value))
+		} else if (!table.equals(other.table))
 			return false;
 		return true;
 	}
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitFieldExpKey(this, null);
+		return v.visitTableDeref(this, arg);
 	}
 
 }

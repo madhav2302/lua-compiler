@@ -1,33 +1,30 @@
 package cop5556fa19.AST;
 
 import cop5556fa19.Token;
-import cop5556fa19.Token.Kind;
 
-public class ExpUnary extends Exp {
+public class StatWhile extends Stat {
 
-	public final Kind op;
 	public final Exp e;
+	public final Block b;
 
-	public ExpUnary(Token firstToken, Kind op, Exp e) {
+	public StatWhile(Token firstToken, Exp e, Block b) {
 		super(firstToken);
-		this.op = op;
 		this.e = e;
+		this.b = b;
 	}
-
 
 	@Override
 	public String toString() {
-		return "ExpUnary [op=" + op + ", e=" + e + ", firstToken=" + firstToken + "]";
+		return "StatWhile [e=" + e + ", b=" + b + ", firstToken=" + firstToken + "]";
 	}
-	
-	
 
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((b == null) ? 0 : b.hashCode());
 		result = prime * result + ((e == null) ? 0 : e.hashCode());
-		result = prime * result + ((op == null) ? 0 : op.hashCode());
 		return result;
 	}
 
@@ -39,23 +36,23 @@ public class ExpUnary extends Exp {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ExpUnary other = (ExpUnary) obj;
+		StatWhile other = (StatWhile) obj;
+		if (b == null) {
+			if (other.b != null)
+				return false;
+		} else if (!b.equals(other.b))
+			return false;
 		if (e == null) {
 			if (other.e != null)
 				return false;
 		} else if (!e.equals(other.e))
-			return false;
-		if (op == null) {
-			if (other.op != null)
-				return false;
-		} else if (!op.equals(other.op))
 			return false;
 		return true;
 	}
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitUnExp(this, arg);
+		return v.visitStatWhile(this, arg);
 	}
 
 }

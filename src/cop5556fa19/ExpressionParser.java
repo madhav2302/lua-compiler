@@ -278,7 +278,7 @@ public class ExpressionParser {
     }
 
     private Block block() {
-        return new Block(null);  //this is OK for Assignment 2
+        return new Block(null, Collections.emptyList());  //this is OK for Assignment 2
     }
 
     private List<Field> fieldList() throws Exception {

@@ -4,27 +4,27 @@ import cop5556fa19.Token;
 
 import java.util.List;
 
-public class ParList extends ASTNode {
+public class StatLocalAssign extends Stat {
 
-	public final List<Name> nameList;
-	public final boolean hasVarArgs;
+	public final List<ExpName> nameList;
+	public final List<Exp> expList;
 
-	public ParList(Token firstToken, List<Name> nameList, boolean hasVarArgs) {
+	public StatLocalAssign(Token firstToken, List<ExpName> nameList, List<Exp> expList) {
 		super(firstToken);
 		this.nameList = nameList;
-		this.hasVarArgs = hasVarArgs;
+		this.expList = expList;
 	}
 
 	@Override
 	public String toString() {
-		return "ParList [nameList=" + nameList + ", hasVarArgs=" + hasVarArgs +  "]";
+		return "StatLocalAssign [nameList=" + nameList + ", expList=" + expList + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (hasVarArgs ? 1231 : 1237);
+		result = prime * result + ((expList == null) ? 0 : expList.hashCode());
 		result = prime * result + ((nameList == null) ? 0 : nameList.hashCode());
 		return result;
 	}
@@ -37,8 +37,11 @@ public class ParList extends ASTNode {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ParList other = (ParList) obj;
-		if (hasVarArgs != other.hasVarArgs)
+		StatLocalAssign other = (StatLocalAssign) obj;
+		if (expList == null) {
+			if (other.expList != null)
+				return false;
+		} else if (!expList.equals(other.expList))
 			return false;
 		if (nameList == null) {
 			if (other.nameList != null)
@@ -50,7 +53,7 @@ public class ParList extends ASTNode {
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitParList(this, arg);
+		return v.visitStatLocalAssign(this, arg);
 	}
 
 }

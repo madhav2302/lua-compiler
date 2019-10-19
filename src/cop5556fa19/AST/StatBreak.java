@@ -2,17 +2,17 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-public class ExpVarArgs extends Exp {
+public class StatBreak extends Stat {
 	
-	public static final ExpVarArgs expVarArgsConst = new ExpVarArgs(null);
+	public static final StatBreak statBreakConst = new StatBreak(null);
 
-	public ExpVarArgs(Token firstToken) {
+	public StatBreak(Token firstToken) {
 		super(firstToken);
 	}
 
 	@Override
 	public String toString() {
-		return "ExpVarArg [firstToken=" + firstToken + "]";
+		return "StatBreak [firstToken=" + firstToken + "]";
 	}
 
 	@Override
@@ -33,7 +33,7 @@ public class ExpVarArgs extends Exp {
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitExpVarArgs(this, arg);
+		return v.visitStatBreak(this, arg);
 	}
 
 }
