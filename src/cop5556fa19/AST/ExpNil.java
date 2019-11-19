@@ -1,7 +1,8 @@
 package cop5556fa19.AST;
 
 import cop5556fa19.Token;
-import static cop5556fa19.Token.Kind.*;
+
+import static cop5556fa19.Token.Kind.KW_nil;
 
 public class ExpNil extends Exp {
 	

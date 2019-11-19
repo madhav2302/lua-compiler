@@ -28,7 +28,7 @@ public class Parser {
     final Scanner scanner;
     Token t;  //invariant:  this is the next token
 
-    Parser(Scanner s) throws Exception {
+    public Parser(Scanner s) throws Exception {
         this.scanner = s;
         t = scanner.getNext(); //establish invariant
     }
@@ -398,12 +398,14 @@ public class Parser {
                 blocks.add(block());
 
                 while (isKind(KW_elseif)) {
+                    consume();
                     exps.add(exp());
                     match(KW_then);
                     blocks.add(block());
                 }
 
                 if (isKind(KW_else)) {
+                    consume();
                     blocks.add(block());
                 }
 
@@ -612,10 +614,14 @@ public class Parser {
     // retstat ::= return [explist] [‘;’]
     public RetStat returnStat() throws Exception {
         Token first = match(KW_return);
-
         List<Exp> expList = new ArrayList<>();
-        while (!isKind(SEMI, KW_end, KW_else, KW_elseif, KW_until)) {
+        if (!isKind(SEMI, KW_end, KW_else, KW_elseif, KW_until)) {
             expList.add(exp());
+
+            while (isKind(COMMA)) {
+                consume();
+                expList.add(exp());
+            }
         }
 
         if (isKind(SEMI)) consume();
@@ -642,7 +648,9 @@ public class Parser {
     }
 
     public Chunk parse() throws Exception {
-        return new Chunk(t, block());
+        Chunk c = new Chunk(t, block());
+        match(EOF);
+        return c;
     }
 
     protected boolean isKind(Kind kind) {

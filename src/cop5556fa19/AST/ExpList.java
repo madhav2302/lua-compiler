@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ExpList extends ASTNode {
 
-	List<Exp> list;
+	public final List<Exp> list;
 
 	public ExpList(Token firstToken, List<Exp> list) {
 		super(firstToken);

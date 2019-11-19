@@ -6,7 +6,7 @@ import java.util.List;
 
 public class RetStat extends Stat {
 
-	List<Exp> el;
+	public final List<Exp> el;
 
 	public RetStat(Token firstToken, List<Exp> el) {
 		super(firstToken);
@@ -15,7 +15,7 @@ public class RetStat extends Stat {
 
 	@Override
 	public String toString() {
-		return "RetStat [el=" + el + ", firstToken=" + firstToken + "]";
+		return "RetStat [el=" + el +  "]";
 	}
 
 	@Override

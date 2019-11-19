@@ -72,7 +72,7 @@ public class Expressions {
 	
 	public static ExpName makeExpName(String name) {
 		Token first = new Token(NAME,name,0,0);
-		return new ExpName(first);
+		return new ExpName(first,-1);
 	}
 	
 	public static List<Stat>  makeStatList(Stat ... ss){
@@ -122,13 +122,6 @@ public class Expressions {
 		return new ExpInt(first);
 	}
 
-//	public static FunctionCall makeFunCall(Exp n, List<Exp> args, String method) {
-//		Token first = n.firstToken;		
-//		ExpName m = (method == null) ? null : makeExpName(method);
-//		FunctionCall f = new FunctionCall(first,n,args, m);
-//		return f;
-//	}
-
 	public static ExpFunctionCall makeExpFunCall(Exp n, List<Exp> args, Object object) {
 		Token first = n.firstToken;		
 		ExpFunctionCall f = new ExpFunctionCall(first,n,args);
@@ -148,7 +141,7 @@ public class Expressions {
 
 	public static StatLabel makeStatLabel(String name) {
 		Name n = makeName(name);
-		return new StatLabel(n.firstToken,n);	
+		return new StatLabel(n.firstToken, n);
 	}
 
 	public static StatGoto makeStatGoto(String name) {
