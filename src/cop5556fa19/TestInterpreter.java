@@ -135,7 +135,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 			expected.add(LuaNil.nil);
 			assertEquals(expected, ret);
 		}
-		
+
+		@Test
+		void returnInIf() throws Exception {
+			String input = "if 1 then return 3 end return 4";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(3);
+			assertEquals(expected, ret);
+		}
 		@Test 
 		void ifnilIsFalse() throws Exception {
 			String input = "if x then x=3 end return x";
@@ -363,7 +372,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 		
 		@Test
 		void table0() throws Exception {
-			String input = "a = {}";
+			String input = "a = {} return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
@@ -375,7 +384,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 		
 		@Test
 		void table1() throws Exception {
-			String input = "a = {\"x\", 2, 3}";
+			String input = "a = {\"x\", 2, 3} return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
@@ -390,7 +399,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 		
 		@Test
 		void table2() throws Exception {
-			String input = "a = {[\"x\"]= 2, [\"y\"]=3}";
+			String input = "a = {[\"x\"]= 2, [\"y\"]=3} return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);			
@@ -404,7 +413,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 		
 		@Test
 		void table3() throws Exception {
-			String input = "a = {x=2, y=3}";
+			String input = "a = {x=2, y=3} return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
@@ -419,7 +428,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 		
 		@Test
 		void table4() throws Exception {
-			String input = "x = \"hello\" y= \"goodbye\" a = {[x]=2, [y]=3}";
+			String input = "x = \"hello\" y= \"goodbye\" a = {[x]=2, [y]=3} return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
