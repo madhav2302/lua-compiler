@@ -21,13 +21,22 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitBlock(Block block, Object arg) throws Exception {
-		for (Stat stat : block.stats) {
+		for (int index = 0; index < block.stats.size(); index++) {
+			Stat stat = block.stats.get(index);
 			if (stat instanceof StatBreak) throw new BreakException();
 			if (stat instanceof RetStat) {
 				return stat.visit(this, arg);
 			} else {
-				Object visit = stat.visit(this, arg);
-				if (visit != null) return visit;
+				try {
+					Object visit = stat.visit(this, arg);
+					if (visit != null) return visit;
+				} catch (GotoException e) {
+					if (e.statLabel.enclosingBlock == block) {
+						index = e.statLabel.index;
+					} else {
+						throw e;
+					}
+				}
 
 			}
 		}
@@ -41,6 +50,12 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	public abstract List<LuaValue> load(Reader r) throws Exception;
 
+	private int toInteger(Object v) throws TypeException {
+		if (v instanceof LuaInt) return ((LuaInt) v).v;
+		else if (v instanceof LuaString) return Integer.parseInt(((LuaString) v).value);
+		throw new TypeException("Expected LuaInteger or LuaString");
+	}
+
 	@Override
 	public Object visitExpBin(ExpBinary expBin, Object arg) throws Exception {
 		stack.push(State.AS_VALUE);
@@ -49,30 +64,88 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		stack.pop();
 
 		switch (expBin.op) {
-			case REL_GT:
-				assert e0 instanceof LuaInt;
-				assert e1 instanceof LuaInt;
-				return new LuaBoolean(((LuaInt) e0).v > ((LuaInt) e1).v);
-			case REL_LT:
-				assert e0 instanceof LuaInt;
-				assert e1 instanceof LuaInt;
-				return new LuaBoolean(((LuaInt) e0).v < ((LuaInt) e1).v);
 			case OP_PLUS:
-				if (e0 instanceof LuaInt && e1 instanceof LuaInt) {
-					return new LuaInt(((LuaInt) e0).v + ((LuaInt) e1).v);
-				} else {
-					throw new RuntimeException();// TODO
-				}
+				return new LuaInt(toInteger(e0) + toInteger(e1));
 			case OP_MINUS:
-				if (e0 instanceof LuaInt && e1 instanceof LuaInt) {
-					return new LuaInt(((LuaInt) e0).v - ((LuaInt) e1).v);
-				} else {
-					throw new RuntimeException();// TODO
+				return new LuaInt(toInteger(e0) - toInteger(e1));
+			case OP_TIMES:
+				return new LuaInt(toInteger(e0) * toInteger(e1));
+			case OP_DIV:
+				return new LuaInt(toInteger(e0) / toInteger(e1));
+			case OP_MOD:
+				return new LuaInt(toInteger(e0) % toInteger(e1));
+			case OP_POW:
+				return new LuaInt((int) Math.pow(toInteger(e0), toInteger(e1)));
+			case OP_DIVDIV:
+				return new LuaInt(Math.floorDiv(toInteger(e0), toInteger(e1)));
+			case DOTDOT:
+				if (e0 instanceof LuaString) {
+					if (e1 instanceof LuaString || e1 instanceof LuaInt) {
+						return new LuaString(e0.toString() + e1.toString());
+					}
+					throw new TypeException("Second exp should be either LuaString or LuaInt");
 				}
-
-
+				throw new TypeException("First param should be LuaString");
+			case REL_EQEQ:
+				return new LuaBoolean(e0.equals(e1));
+			case REL_NOTEQ:
+				return new LuaBoolean(!e0.equals(e1));
+			case REL_GT:
+				if (e0 instanceof LuaInt && e1 instanceof LuaInt) {
+					return new LuaBoolean(toInteger(e0) > toInteger(e1));
+				} else if (e0 instanceof LuaString && e1 instanceof LuaString) {
+					return ((LuaString) e0).value.compareTo(((LuaString) e1).value) > 0
+							? new LuaBoolean(true)
+							: new LuaBoolean(false);
+				} else {
+					throw new TypeException("Expecting something else");
+				}
+			case REL_LT:
+				if (e0 instanceof LuaInt && e1 instanceof LuaInt) {
+					return new LuaBoolean(toInteger(e0) < toInteger(e1));
+				} else if (e0 instanceof LuaString && e1 instanceof LuaString) {
+					return ((LuaString) e0).value.compareTo(((LuaString) e1).value) < 0
+							? new LuaBoolean(true)
+							: new LuaBoolean(false);
+				} else {
+					throw new TypeException("Expecting something else");
+				}
+			case REL_GE:
+				if (e0 instanceof LuaInt && e1 instanceof LuaInt) {
+					return new LuaBoolean(toInteger(e0) >= toInteger(e1));
+				} else if (e0 instanceof LuaString && e1 instanceof LuaString) {
+					return ((LuaString) e0).value.compareTo(((LuaString) e1).value) >= 0
+							? new LuaBoolean(true)
+							: new LuaBoolean(false);
+				} else {
+					throw new TypeException("Expecting something else");
+				}
+			case REL_LE:
+				if (e0 instanceof LuaInt && e1 instanceof LuaInt) {
+					return new LuaBoolean(toInteger(e0) <= toInteger(e1));
+				} else if (e0 instanceof LuaString && e1 instanceof LuaString) {
+					return ((LuaString) e0).value.compareTo(((LuaString) e1).value) <= 0
+							? new LuaBoolean(true)
+							: new LuaBoolean(false);
+				} else {
+					throw new TypeException("Expecting something else");
+				}
+			case KW_and:
+				return new LuaBoolean(asBoolean(e0) && asBoolean(e1));
+			case KW_or:
+				return new LuaBoolean(asBoolean(e0) || asBoolean(e1));
+			case BIT_XOR:
+				return new LuaInt(toInteger(e0) ^ toInteger(e1));
+			case BIT_OR:
+				return new LuaInt(toInteger(e0) | toInteger(e1));
+			case BIT_AMP:
+				return new LuaInt(toInteger(e0) & toInteger(e1));
+			case BIT_SHIFTL:
+				return new LuaInt(toInteger(e0) << toInteger(e1));
+			case BIT_SHIFTR:
+				return new LuaInt(toInteger(e0) >> toInteger(e1));
 		}
-		throw new RuntimeException();
+		throw new IllegalArgumentException();
 	}
 
 	@Override
@@ -87,7 +160,22 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitUnExp(ExpUnary unExp, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		stack.push(State.AS_VALUE);
+		Object visit = unExp.e.visit(this, arg);
+		stack.pop();
+		switch (unExp.op) {
+			case OP_MINUS:
+				return new LuaInt(-1 * toInteger(visit));
+			case KW_not:
+				return new LuaBoolean(!asBoolean(visit));
+			case OP_HASH:
+				if (visit instanceof LuaString) return new LuaInt(((LuaString) visit).value.length());
+				if (visit instanceof LuaTable) return new LuaInt(0); // TODO
+				throw new TypeException("Expected LuaString or LuaTable");
+			case BIT_XOR:
+				return new LuaInt(~toInteger(visit));
+		}
+		throw new IllegalArgumentException("Unknown unary operator " + unExp.op);
 	}
 
 	@Override
@@ -174,7 +262,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatGoto(StatGoto statGoto, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		throw new GotoException(statGoto.label);
 	}
 
 	@Override
@@ -338,7 +426,15 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitLabel(StatLabel statLabel, Object ar) {
-		throw new UnsupportedOperationException();
+		return null;
+	}
+
+	private static class GotoException extends Exception {
+		public final StatLabel statLabel;
+
+		private GotoException(StatLabel statLabel) {
+			this.statLabel = statLabel;
+		}
 	}
 
 	@Override
