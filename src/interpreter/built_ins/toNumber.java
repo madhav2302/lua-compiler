@@ -1,13 +1,13 @@
 package interpreter.built_ins;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import interpreter.ASTVisitorAdapter.TypeException;
 import interpreter.JavaFunction;
 import interpreter.LuaInt;
 import interpreter.LuaString;
 import interpreter.LuaValue;
-import interpreter.ASTVisitorAdapter.TypeException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class toNumber extends JavaFunction {
 
@@ -15,12 +15,14 @@ public class toNumber extends JavaFunction {
 	public List<LuaValue> call(List<LuaValue> functionargs) throws TypeException {
 		LuaValue arg = functionargs.get(0);
 		List<LuaValue> retList = new ArrayList<>();
-		if (arg instanceof LuaInt) { 
+		if (arg instanceof LuaInt) {
 			retList.add(arg);
+			return retList;
 		}
 		if (arg instanceof LuaString) {
 			int num = Integer.parseInt(((LuaString)arg).value);
 			retList.add(new LuaInt(num));
+			return retList;
 		}
 		throw new TypeException("Cannot convert " + arg + "to a number");
 	}
