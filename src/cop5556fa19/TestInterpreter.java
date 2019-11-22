@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 				System.out.println(input);
 			}
 		}
-				
+
 
 		/**
 		 * scans, parses, and interprets a program representing a Lua chunk.
@@ -199,6 +199,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 			expected.add(LuaNil.nil);
 			assertEquals(expected, ret);
 		}
+
+		@Test
+		void arithmeticOperations() throws Exception {
+			String input = "a = 21 b = 10 add = a + b minus = a - b multiply = a * b div = a / b mod = a % b power = a ^ 2 negation = -a divdiv = negation // b return add,minus, multiply, div, mod, power, negation, divdiv";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+		}
 		
 		@Test 
 		void goto0() throws Exception {
@@ -253,7 +261,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 				List<LuaValue> ret = interpret(input);
 			});		
 		}
-		
+
 		@Test 
 		void gotoscopedlabels2() throws Exception { 
 			String input = "do x=1 do y=2 do a = 4 goto label1 b=5 ::label1:: z=3 end ::label1:: w=6 end end return w,x,y,z,a,b";
