@@ -2,7 +2,6 @@ package interpreter;
 
 import cop5556fa19.AST.*;
 import cop5556fa19.Token;
-import javafx.util.Pair;
 
 import java.io.Reader;
 import java.util.ArrayList;
@@ -37,7 +36,6 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 						throw e;
 					}
 				}
-
 			}
 		}
 		return null;
@@ -301,16 +299,25 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	@Override
 	public Object visitStatAssign(StatAssign statAssign, Object arg) throws Exception {
 		LuaTable table = (LuaTable) arg;
-		if (statAssign.expList.size() != statAssign.varList.size()) throw new RuntimeException();
 
 		for (int index = 0; index < statAssign.varList.size(); index++) {
 			Exp var = statAssign.varList.get(index);
-			Exp exp = statAssign.expList.get(index);
+			Exp exp = index >= statAssign.expList.size() ? ExpNil.expNilConst : statAssign.expList.get(index);
 
-			Object key = var.visit(this, arg);
-			Object value = exp.visit(this, arg);
+			if (var instanceof ExpTableLookup) {
+				ExpTableLookup expTableLookup = (ExpTableLookup)  var;
+				stack.push(State.AS_VALUE);
+				LuaTable internalTable = (LuaTable) expTableLookup.table.visit(this, arg);
+				Object key = expTableLookup.key.visit(this, arg);
+				Object value = exp.visit(this, arg);
+				stack.pop();
+				internalTable.put((LuaValue) key, (LuaValue) value);
+			} else {
+				Object key = var.visit(this, arg);
+				Object value = exp.visit(this, arg);
 
-			table.put((LuaValue) key, (LuaValue) value);
+				table.put((LuaValue) key, (LuaValue) value);
+			}
 		}
 		return null;
 	}
@@ -418,7 +425,17 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitExpTableLookup(ExpTableLookup expTableLookup, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		stack.push(State.AS_VALUE);
+		Object expTable = expTableLookup.table.visit(this, arg);
+		Object key = expTableLookup.key.visit(this, arg);
+		stack.pop();
+
+		if (!(expTable instanceof LuaTable)) throw new TypeException(nonNullFirstToken(expTableLookup.firstToken), "");
+		return ((LuaTable)expTable).get((LuaValue) key);
+	}
+
+	private Token nonNullFirstToken(Token token) {
+		return token == null ? new Token(Token.Kind.EOF, "", 0, 0) : token;
 	}
 
 	private static class BreakException extends Exception {
@@ -430,7 +447,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	}
 
 	private static class GotoException extends Exception {
-		public final StatLabel statLabel;
+		final StatLabel statLabel;
 
 		private GotoException(StatLabel statLabel) {
 			this.statLabel = statLabel;

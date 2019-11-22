@@ -83,11 +83,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 		
 		@Test
 		void run2() throws Exception{
-			String input = "x=35 return x";
+			String input = "x,b=35 return x,b";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
-			LuaValue[] vals = {new LuaInt(35)};
+			LuaValue[] vals = {new LuaInt(35), LuaNil.nil};
 			List<LuaValue> expected = Arrays.asList(vals);
 			assertEquals(expected, ret);
 		}
@@ -489,6 +489,52 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 			List<LuaValue> expected = makeExpectedWithInts(4,2);
 			assertEquals(expected,ret);
 		}
+
+		@Test
+		void gotoTest4() throws Exception {
+			String input = "x = 3\n" +
+					"while true\n" +
+					"do \n" +
+					"    goto label1\n" +
+					"    x = 4\n" +
+					"    break\n" +
+					"end\n" +
+					"\n" +
+					"x = 5\n" +
+					"::label1::\n" +
+					"\n" +
+					"dummy = println(x)\n" +
+					"return x";
+
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(3);
+			assertEquals(expected, ret);
+		}
+
+		@Test
+		void gotoTest3() throws Exception {
+			String input = "\n" +
+					"x = 3\n" +
+					"while true\n" +
+					"do \n" +
+					"    break\n" +
+					"    goto label1\n" +
+					"    x = 4\n" +
+					"end\n" +
+					"\n" +
+					"x = 5\n" +
+					"::label1::\n" +
+					"\n" +
+					"\n" +
+					"return x";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(5);
+			assertEquals(expected, ret);
+		}
 		
 		@Test
 		void gotoTest2() throws Exception{
@@ -528,7 +574,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 		
 		@Test 
 		void testSetField1() throws Exception{
-			String input = "a = {1,2,3} t= {a} dummy = print(t[1][3]) return t";
+			String input = "a = {1,2,3} t= {a} dummy = print(t[1][3]) a[5] = 5 return t";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);	
@@ -537,12 +583,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 			a.put(new LuaInt(1),new LuaInt(1));
 			a.put(new LuaInt(2),new LuaInt(2));
 			a.put(new LuaInt(3),new LuaInt(3));
-			
+			a.put(new LuaInt(5),new LuaInt(5));
+
 			LuaTable expected = new LuaTable();
 			expectedList.add(expected);
 			expected.put(new LuaInt(1), a);
 			assertEquals(expectedList,ret);
 		}
-		
-
 }

@@ -2,7 +2,6 @@ package interpreter;
 
 import cop5556fa19.AST.*;
 import cop5556fa19.Token;
-import javafx.util.Pair;
 
 import java.util.*;
 
@@ -10,9 +9,10 @@ public class StaticAnalysis implements ASTVisitor {
 
     private final Stack<Integer> scopeStack = new Stack<>();
     private final Map<String, List<Data>> map = new HashMap<>();
-    boolean savingLabels = true;
-    int currentScope, nextScope;
-    public StaticAnalysis() {
+    private boolean savingLabels = true;
+    private int currentScope, nextScope;
+
+    StaticAnalysis() {
         currentScope = 0;
         nextScope = 1;
         scopeStack.push(0);
@@ -26,12 +26,12 @@ public class StaticAnalysis implements ASTVisitor {
         scopeStack.push(0);
     }
 
-    public void enterScope() {
+    private void enterScope() {
         currentScope = nextScope++;
         scopeStack.push(currentScope);
     }
 
-    public void leaveScope() {
+    private void leaveScope() {
         scopeStack.pop();
         currentScope = scopeStack.peek();
     }
@@ -45,15 +45,15 @@ public class StaticAnalysis implements ASTVisitor {
         map.get(stat.label.name).add(data);
     }
 
-    public StatLabel lookup(StatGoto sGoto) throws StaticSemanticException {
+    private StatLabel lookup(StatGoto sGoto) throws StaticSemanticException {
         if (!map.containsKey(sGoto.name.name))
             throw new StaticSemanticException(sGoto.firstToken == null ? new Token(Token.Kind.EOF, "", 0, 0) : sGoto.firstToken, "no visible label '" + sGoto.name + "'");
 
         Data data = null;
         List<Data> labels = map.get(sGoto.name.name);
         for (int index = labels.size() - 1; index >= 0; index--) {
-            int labelScope = labels.get(index).scope;
-            if (scopeStack.contains(labelScope) && (data == null || scopeStack.search(labelScope) < scopeStack.search(data.scope))) {
+            int depth = scopeStack.search(labels.get(index).scope);
+            if (depth > -1 && (data == null || depth < scopeStack.search(data.scope))) {
                 data = labels.get(index);
             }
         }
