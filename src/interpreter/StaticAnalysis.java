@@ -1,10 +1,78 @@
 package interpreter;
 
 import cop5556fa19.AST.*;
+import cop5556fa19.Token;
+import javafx.util.Pair;
+
+import java.util.*;
 
 public class StaticAnalysis implements ASTVisitor {
+
+    private final Stack<Integer> scopeStack = new Stack<>();
+    private final Map<String, List<Data>> map = new HashMap<>();
+    boolean savingLabels = true;
+    int currentScope, nextScope;
+    public StaticAnalysis() {
+        currentScope = 0;
+        nextScope = 1;
+        scopeStack.push(0);
+    }
+
+    private void resetScope() {
+        scopeStack.clear();
+
+        currentScope = 0;
+        nextScope = 1;
+        scopeStack.push(0);
+    }
+
+    public void enterScope() {
+        currentScope = nextScope++;
+        scopeStack.push(currentScope);
+    }
+
+    public void leaveScope() {
+        scopeStack.pop();
+        currentScope = scopeStack.peek();
+    }
+
+    private void insert(StatLabel stat) throws StaticSemanticException {
+        Data data = new Data(currentScope, stat);
+        map.putIfAbsent(stat.label.name, new ArrayList<>());
+        if (map.get(stat.label.name).contains(data)) {
+            throw new StaticSemanticException(stat.firstToken == null ? new Token(Token.Kind.EOF, "", 0, 0) : stat.firstToken, "Multiple declaration of label in same scope");
+        }
+        map.get(stat.label.name).add(data);
+    }
+
+    public StatLabel lookup(StatGoto sGoto) throws StaticSemanticException {
+        if (!map.containsKey(sGoto.name.name))
+            throw new StaticSemanticException(sGoto.firstToken == null ? new Token(Token.Kind.EOF, "", 0, 0) : sGoto.firstToken, "no visible label '" + sGoto.name + "'");
+
+        Data data = null;
+        List<Data> labels = map.get(sGoto.name.name);
+        for (int index = labels.size() - 1; index >= 0; index--) {
+            int labelScope = labels.get(index).scope;
+            if (scopeStack.contains(labelScope) && (data == null || scopeStack.search(labelScope) < scopeStack.search(data.scope))) {
+                data = labels.get(index);
+            }
+        }
+        if (data != null) return data.label;
+        throw new StaticSemanticException(sGoto.firstToken == null ? new Token(Token.Kind.EOF, "", 0, 0) : sGoto.firstToken, "");
+    }
+
     @Override
     public Object visitExpNil(ExpNil expNil, Object arg) throws Exception {
+        return LuaNil.nil;
+    }
+
+    @Override
+    public Object visitBlock(Block block, Object arg) throws Exception {
+        enterScope();
+        for (int index = 0; index < block.stats.size(); index++) {
+            block.stats.get(index).visit(this, new Pair<>(block, index));
+        }
+        leaveScope();
         return null;
     }
 
@@ -54,7 +122,9 @@ public class StaticAnalysis implements ASTVisitor {
     }
 
     @Override
-    public Object visitBlock(Block block, Object arg) throws Exception {
+    public Object visitStatGoto(StatGoto statGoto, Object arg) throws Exception {
+        if (savingLabels) return null;
+        statGoto.label = lookup(statGoto);
         return null;
     }
 
@@ -69,27 +139,37 @@ public class StaticAnalysis implements ASTVisitor {
     }
 
     @Override
-    public Object visitStatGoto(StatGoto statGoto, Object arg) throws Exception {
-        return null;
-    }
-
-    @Override
     public Object visitStatDo(StatDo statDo, Object arg) throws Exception {
+        statDo.b.visit(this, arg);
         return null;
     }
 
     @Override
     public Object visitStatWhile(StatWhile statWhile, Object arg) throws Exception {
+        statWhile.b.visit(this, arg);
         return null;
     }
 
     @Override
     public Object visitStatRepeat(StatRepeat statRepeat, Object arg) throws Exception {
+        statRepeat.b.visit(this, arg);
         return null;
     }
 
     @Override
     public Object visitStatIf(StatIf statIf, Object arg) throws Exception {
+        for (Block b : statIf.bs) {
+            b.visit(this, arg);
+        }
+        return null;
+    }
+
+    @Override
+    public Object visitChunk(Chunk chunk, Object arg) throws Exception {
+        chunk.block.visit(this, arg);
+        savingLabels = false;
+
+        resetScope();
         return null;
     }
 
@@ -129,7 +209,13 @@ public class StaticAnalysis implements ASTVisitor {
     }
 
     @Override
-    public Object visitChunk(Chunk chunk, Object arg) throws Exception {
+    public Object visitLabel(StatLabel statLabel, Object ar) throws Exception {
+        if (!savingLabels) return null;
+
+        Pair<Block, Integer> pair = (Pair) ar;
+        statLabel.enclosingBlock = pair.getKey();
+        statLabel.index = pair.getValue();
+        insert(statLabel);
         return null;
     }
 
@@ -183,9 +269,28 @@ public class StaticAnalysis implements ASTVisitor {
         return null;
     }
 
-    @Override
-    public Object visitLabel(StatLabel statLabel, Object ar) throws Exception {
-        return null;
+    private static class Data {
+        public final int scope;
+        public final StatLabel label;
+
+        public Data(int scope, StatLabel label) {
+            this.scope = scope;
+            this.label = label;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Data data = (Data) o;
+            return scope == data.scope &&
+                    Objects.equals(label, data.label);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(scope, label);
+        }
     }
 
     @Override
