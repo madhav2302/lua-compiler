@@ -22,20 +22,12 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	public Object visitBlock(Block block, Object arg) throws Exception {
 		for (int index = 0; index < block.stats.size(); index++) {
 			Stat stat = block.stats.get(index);
-			if (stat instanceof StatBreak) throw new BreakException();
-			if (stat instanceof RetStat) {
-				return stat.visit(this, arg);
-			} else {
-				try {
-					Object visit = stat.visit(this, arg);
-					if (visit != null) return visit;
-				} catch (GotoException e) {
-					if (e.statLabel.enclosingBlock == block) {
-						index = e.statLabel.index;
-					} else {
-						throw e;
-					}
-				}
+			try {
+				Object visit = stat.visit(this, arg);
+				if (visit != null) return visit;
+			} catch (GotoException e) {
+				if (e.statLabel.enclosingBlock == block) index = e.statLabel.index; // Jump to index
+				else throw e; // Label is in outer block
 			}
 		}
 		return null;
@@ -255,7 +247,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatBreak(StatBreak statBreak, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		throw new BreakException();
 	}
 
 	@Override
