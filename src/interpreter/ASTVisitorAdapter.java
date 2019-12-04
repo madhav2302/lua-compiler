@@ -69,12 +69,8 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 			case OP_DIVDIV:
 				return new LuaInt(Math.floorDiv(toInteger(e0), toInteger(e1)));
 			case DOTDOT:
-				if (e0 instanceof LuaString) {
-					if (e1 instanceof LuaString || e1 instanceof LuaInt) {
+				if ((e0 instanceof LuaInt || e0 instanceof LuaString) && (e1 instanceof LuaInt || e1 instanceof LuaString))
 						return new LuaString(e0.toString() + e1.toString());
-					}
-					throw new TypeException("Second exp should be either LuaString or LuaInt");
-				}
 				throw new TypeException("First param should be LuaString");
 			case REL_EQEQ:
 				return new LuaBoolean(e0.equals(e1));
@@ -396,8 +392,8 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 			stack.pop();
 		}
 
-		((JavaFunction) table.get((LuaString) functionName)).call(args);
-		return null;
+		List<LuaValue> call = ((JavaFunction) table.get((LuaString) functionName)).call(args);
+		return call.isEmpty() ? null : call.get(0);
 	}
 
 	@Override

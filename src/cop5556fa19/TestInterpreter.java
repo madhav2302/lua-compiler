@@ -589,4 +589,43 @@ import static org.junit.jupiter.api.Assertions.*;
 			expected.put(new LuaInt(1), a);
 			assertEquals(expectedList,ret);
 		}
-}
+
+		@Test
+		void table7() throws Exception {
+			String input = "x = { \nprint(\n\"This is returning nothing. Should this throw?\"\n) \n} \nreturn x";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+		}
+
+		@Test
+		void mathOperation7() throws Exception {
+			String input = "a=toNumber(\"2\"); return 1+a";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			ret.forEach(System.out::println);
+		}
+
+		@Test
+		void stringConcat1() throws Exception {
+			String input = "return 123 .. \" one two three\"";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			ret.forEach(System.out::println);
+		}
+
+		@Test
+		void stringConcat2() throws Exception {
+			String input = "return (100+20+3) .. \" one two three\"";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			ret.forEach(System.out::println);
+		}
+
+		@Test
+		void toNumberTest() throws Exception {
+			String input = "a = toNumber(\"33\"); return a";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			ret.forEach(System.out::println);
+		}
+	}
