@@ -312,7 +312,7 @@ public class Parser {
                 Exp exp = exp();
                 return new FieldNameKey(nameToken, new Name(nameToken, nameToken.getName()), exp);
             } else {
-                return new FieldImplicitKey(nameToken, new ExpName(nameToken));
+                return new FieldImplicitKey(nameToken, prefixExpTail(new ExpName(nameToken)));
             }
         }
 
