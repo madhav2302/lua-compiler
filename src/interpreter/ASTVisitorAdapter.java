@@ -393,7 +393,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		}
 
 		List<LuaValue> call = ((JavaFunction) (functionName instanceof JavaFunction ? functionName : table.get((LuaString) functionName))).call(args);
-		return call.isEmpty() ? null : call.get(0);
+		return call.isEmpty() ? LuaNil.nil : call.get(0);
 	}
 
 	@Override
