@@ -1,11 +1,11 @@
-## Lua Compiler
+## Lua Interpreter
 
 It is an assignment of course Programming Language Principle (COP5556) taught in University of Florida. 
 
 
 ### About the project
 
-It is simple Lua compiler built on Java, which performs basic arithmetic operations and function calls in Lua.
+It is simple Lua interpreter built on Java, which performs basic arithmetic operations and function calls in Lua.
 Grammar for the assignment is [here](resources/grammar.txt).
 
 The project is divided into 4 parts -
